@@ -122,7 +122,7 @@ const addUser = async (name: string, role: Role, mobile: string, pin: string) =>
     // 1. Log the attempt locally for tracking
     console.log("Invoking Add-User for:", name);
 
-    const { data, error } = await supabase.functions.invoke('Add-User', {
+    const { data, error } = await supabase.functions.invoke('admin-create-user', {
       body: { name, role, mobile, pin }
     });
 
