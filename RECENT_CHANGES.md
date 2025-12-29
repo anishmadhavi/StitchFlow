@@ -1,4 +1,4 @@
 ### 📜 Recent Changes
 | Status | File Path |
 | :--- | :--- |
-| M | package.json |
+| M | components/AdminDashboard.tsx |
