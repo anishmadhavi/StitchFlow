@@ -22,11 +22,13 @@
 ├── index.tsx
 ├── metadata.json
 ├── package.json
+├── services
+│   └── userService.ts
 ├── src
 │   └── supabaseClient.ts
 ├── tsconfig.json
 ├── types.ts
 └── vite.config.ts
 
-6 directories, 21 files
+7 directories, 22 files
 ```
