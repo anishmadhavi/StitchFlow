@@ -1,59 +1,22 @@
-### 🧠 Detailed Code Map
+### 🧠 Detailed Code Map (File-Wise)
 
-| File | Location | Logic Pattern |
-| :--- | :--- | :--- |
-| `App.tsx` | Line 19 | `export default function App() {` |
-| `App.tsx` | Line 38 | `const loadProfile = async (userId: string, source: string) =` |
-| `App.tsx` | Line 68 | `const initializeAuth = async () => {` |
-| `App.tsx` | Line 151 | `const fetchData = async () => {` |
-| `App.tsx` | Line 182 | `const handleLogin = async (identifier: string, secret: strin` |
-| `App.tsx` | Line 201 | `const handleSignUp = async (name: string, email: string, sec` |
-| `App.tsx` | Line 223 | `const handleLogout = async () => {` |
-| `App.tsx` | Line 230 | `const addUser = async (name: string, role: Role, mobile: str` |
-| `App.tsx` | Line 238 | `// 2. Check for connection errors (e.g., wrong function name` |
-| `App.tsx` | Line 245 | `// 3. Check for database errors returned INSIDE the function` |
-| `App.tsx` | Line 256 | `const updateUser = async (userId: string, updates: Partial<U` |
-| `App.tsx` | Line 270 | `const deleteUser = async (userId: string) => {` |
-| `App.tsx` | Line 281 | `const createBatch = async (batchData: Partial<Batch>) => {` |
-| `App.tsx` | Line 297 | `const finalizeCut = async (batchId: string, actualQty: SizeQ` |
-| `App.tsx` | Line 310 | `const assignToKarigar = async (batchId: string, karigarId: s` |
-| `App.tsx` | Line 346 | `const updateAssignmentStatus = async (batchId: string, assig` |
-| `App.tsx` | Line 358 | `const handleQCSubmit = async (batchId: string, assignmentId:` |
-| `App.tsx` | Line 392 | `const handleTransaction = async (userId: string, amount: num` |
-| `App.tsx` | Line 412 | `const handleArchive = async (batchId: string) => {` |
-| `Login.tsx` | Line 27 | `const handleSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 69 | `const handleShopifySync = () => {` |
-| `ManagerDashboard.tsx` | Line 85 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
-| `ManagerDashboard.tsx` | Line 116 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 130 | `const openCutModal = (batch: Batch) => {` |
-| `ManagerDashboard.tsx` | Line 135 | `const handleCutSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 141 | `const openAssignModal = (batch: Batch) => {` |
-| `ManagerDashboard.tsx` | Line 148 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 159 | `const openInspectModal = (item: any) => {` |
-| `ManagerDashboard.tsx` | Line 165 | `const handleQCSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 173 | `const handleQCQtyChange = (size: string, val: number) => {` |
-| `ManagerDashboard.tsx` | Line 270 | `const totalAvailable = (Object.values(batch.availableQty) as` |
-| `AdminDashboard.tsx` | Line 80 | `const getActiveAssignments = (userId: string) => {` |
-| `AdminDashboard.tsx` | Line 88 | `const handleShopifySync = () => {` |
-| `AdminDashboard.tsx` | Line 104 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
-| `AdminDashboard.tsx` | Line 130 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 144 | `const openBatchDetails = (batch: Batch) => {` |
-| `AdminDashboard.tsx` | Line 149 | `const openAssignModal = () => {` |
-| `AdminDashboard.tsx` | Line 157 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 166 | `const handleAddUser = async (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 183 | `const openPassbook = (userId: string) => {` |
-| `AdminDashboard.tsx` | Line 188 | `const submitPayment = (e: React.FormEvent) => {` |
-| `MasterDashboard.tsx` | Line 50 | `const openCutModal = (batch: Batch) => {` |
-| `MasterDashboard.tsx` | Line 55 | `const handleCutSubmit = async (e: React.FormEvent) => {` |
-| `MasterDashboard.tsx` | Line 73 | `const openAssignModal = (batch: Batch) => {` |
-| `MasterDashboard.tsx` | Line 83 | `const handleSelectKarigar = (karigarId: string) => {` |
-| `MasterDashboard.tsx` | Line 88 | `const handleAssignSubmit = async (e: React.FormEvent) => {` |
-| `MasterDashboard.tsx` | Line 196 | `const totalAvailable = (Object.values(batch.availableQty) as` |
-| `KarigarDashboard.tsx` | Line 53 | `const calculateTotalQty = (qty: SizeQty) => Object.values(qt` |
-| `KarigarDashboard.tsx` | Line 55 | `const isAdvance = (currentUser.walletBalance ?? 0) < 0;` |
-| `KarigarDashboard.tsx` | Line 58 | `const handlePhotoUpload = async (e: React.ChangeEvent<HTMLIn` |
-| `QCDashboard.tsx` | Line 34 | `const openInspectModal = (item: any) => {` |
-| `QCDashboard.tsx` | Line 40 | `const handleSubmit = async (e: React.FormEvent) => {` |
-| `QCDashboard.tsx` | Line 74 | `const handleQtyChange = (size: string, val: number) => {` |
-| `QCDashboard.tsx` | Line 82 | `const totalPassed = (Object.values(qcForm) as number[]).redu` |
-| `QCDashboard.tsx` | Line 198 | `function formatDate(dateStr?: string) {` |
+#### 📄 App.tsx
+> Line 19: `App`, Line 38: `loadProfile`, Line 68: `initializeAuth`, Line 151: `fetchData`, Line 182: `handleLogin`, Line 201: `handleSignUp`, Line 223: `handleLogout`, Line 230: `addUser`, Line 238: `name`, Line 245: `response`, Line 256: `updateUser`, Line 270: `deleteUser`, Line 281: `createBatch`, Line 297: `finalizeCut`, Line 310: `assignToKarigar`, Line 346: `updateAssignmentStatus`, Line 358: `handleQCSubmit`, Line 392: `handleTransaction`, Line 412: `handleArchive`
+
+#### 📄 Login.tsx
+> Line 27: `handleSubmit`
+
+#### 📄 ManagerDashboard.tsx
+> Line 69: `handleShopifySync`, Line 85: `handleImageUpload`, Line 116: `handleSubmitBatch`, Line 130: `openCutModal`, Line 135: `handleCutSubmit`, Line 141: `openAssignModal`, Line 148: `handleAssignSubmit`, Line 159: `openInspectModal`, Line 165: `handleQCSubmit`, Line 173: `handleQCQtyChange`, Line 270: `totalAvailable`
+
+#### 📄 AdminDashboard.tsx
+> Line 80: `getActiveAssignments`, Line 88: `handleShopifySync`, Line 104: `handleImageUpload`, Line 130: `handleSubmitBatch`, Line 144: `openBatchDetails`, Line 149: `openAssignModal`, Line 157: `handleAssignSubmit`, Line 166: `handleAddUser`, Line 183: `openPassbook`, Line 188: `submitPayment`
+
+#### 📄 MasterDashboard.tsx
+> Line 50: `openCutModal`, Line 55: `handleCutSubmit`, Line 73: `openAssignModal`, Line 83: `handleSelectKarigar`, Line 88: `handleAssignSubmit`, Line 196: `totalAvailable`
+
+#### 📄 KarigarDashboard.tsx
+> Line 53: `calculateTotalQty`, Line 55: `isAdvance`, Line 58: `handlePhotoUpload`
+
+#### 📄 QCDashboard.tsx
+> Line 34: `openInspectModal`, Line 40: `handleSubmit`, Line 74: `handleQtyChange`, Line 82: `totalPassed`, Line 198: `formatDate`

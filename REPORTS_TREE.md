@@ -1,29 +1,29 @@
 ### 📂 Project Tree
 ```text
-
-/home/runner/work/StitchFlow/StitchFlow
+.
+├── .github
+│   └── workflows
+│       └── master_bot.yml
 ├── App.tsx
 ├── README.md
-├── RECENT_CHANGES.md
-├── REPORTS_DEAD_CODE.md
-├── REPORTS_LOGIC_MAP.md
-├── REPORTS_SECURITY.md
-├── REPORTS_SIZE.md
-├── REPORTS_TREE.md
 ├── components
+│   ├── AdminDashboard.tsx
+│   ├── KarigarDashboard.tsx
+│   ├── Login.tsx
+│   ├── ManagerDashboard.tsx
+│   ├── MasterDashboard.tsx
+│   ├── QCDashboard.tsx
+│   └── Shared.tsx
 ├── constants.ts
 ├── index.html
 ├── index.tsx
 ├── metadata.json
-├── package-lock.json
 ├── package.json
 ├── src
+│   └── supabaseClient.ts
 ├── tsconfig.json
 ├── types.ts
 └── vite.config.ts
 
-directory: 2 file: 17
-
-
-
-[2K[1G```
+5 directories, 19 files
+```
