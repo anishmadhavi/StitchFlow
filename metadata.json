@@ -1,0 +1,5 @@
+{
+  "name": "StitchFlow - Garment Production Tracker",
+  "description": "A comprehensive production tracking system for garment manufacturing. Manages workflows from cutting to stitching and QC, with integrated digital job cards and automatic ledger management for karigars.",
+  "requestFramePermissions": []
+}
