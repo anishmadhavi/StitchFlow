@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../src/supabaseClient';
 import { BookOpen, CheckCircle, XCircle, Shirt, AlertOctagon, Camera } from 'lucide-react';
 import { Batch, Assignment, User, AssignmentStatus, SizeQty } from '../types';
 import { Button, Card, Badge } from './Shared';
