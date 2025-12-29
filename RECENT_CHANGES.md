@@ -1,4 +1,4 @@
 ### 📜 Recent Changes
 | Status | File Path |
 | :--- | :--- |
-| M | components/ManagerDashboard.tsx |
+| M | App.tsx |
