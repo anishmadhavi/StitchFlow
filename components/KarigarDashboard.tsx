@@ -178,28 +178,38 @@ const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               
               {/* Action Bar */}
               <div className="bg-gray-50 p-3 border-t flex gap-3">
-                {item.status === AssignmentStatus.ASSIGNED ? (
+{item.status === 'Assigned' ? (
                   <>
                     <Button 
                       variant="secondary" 
-                      className="flex-1 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                      onClick={() => onRejectAssignment(item.batch.id, item.id)}
+                      className="flex-1 py-3"
+                      onClick={async () => {
+                         // Logic to return stock to batch available_qty would go here for Rejections
+                         await supabase.from('assignments').update({ status: 'Rejected' }).eq('id', item.id);
+                      }}
                     >
-                      <XCircle size={18} className="mr-2" /> Reject
+                      Reject
                     </Button>
                     <Button 
-                      className="flex-1 py-3 bg-green-600 hover:bg-green-700"
-                      onClick={() => onAcceptAssignment(item.batch.id, item.id)}
+                      className="flex-1 py-3 bg-green-600"
+                      onClick={async () => {
+                         await supabase.from('assignments').update({ status: 'Accepted' }).eq('id', item.id);
+                      }}
                     >
-                      <CheckCircle size={18} className="mr-2" /> Accept
+                      Accept
                     </Button>
                   </>
                 ) : (
                   <Button 
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-base"
-                    onClick={() => onMarkComplete(item.batch.id, item.id)}
+                    className="w-full py-3 bg-blue-600"
+                    onClick={async () => {
+                       await supabase.from('assignments').update({ 
+                         status: 'Stitched',
+                         completed_at: new Date().toISOString() 
+                       }).eq('id', item.id);
+                    }}
                   >
-                    <Shirt size={18} className="mr-2" /> Mark as Stitched
+                    Mark as Stitched
                   </Button>
                 )}
               </div>
