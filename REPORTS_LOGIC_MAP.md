@@ -4,22 +4,22 @@
 | :--- | :--- | :--- |
 | `App.tsx` | Line 19 | `export default function App() {` |
 | `App.tsx` | Line 37 | `const initializeAuth = async () => {` |
-| `App.tsx` | Line 159 | `const fetchData = async () => {` |
-| `App.tsx` | Line 190 | `const handleLogin = async (identifier: string, secret: strin` |
-| `App.tsx` | Line 209 | `const handleSignUp = async (name: string, email: string, sec` |
-| `App.tsx` | Line 231 | `const handleLogout = async () => {` |
-| `App.tsx` | Line 238 | `const addUser = async (name: string, role: Role, mobile: str` |
-| `App.tsx` | Line 246 | `// 2. Check for connection errors (e.g., wrong function name` |
-| `App.tsx` | Line 253 | `// 3. Check for database errors returned INSIDE the function` |
-| `App.tsx` | Line 264 | `const updateUser = async (userId: string, updates: Partial<U` |
-| `App.tsx` | Line 278 | `const deleteUser = async (userId: string) => {` |
-| `App.tsx` | Line 289 | `const createBatch = async (batchData: Partial<Batch>) => {` |
-| `App.tsx` | Line 305 | `const finalizeCut = async (batchId: string, actualQty: SizeQ` |
-| `App.tsx` | Line 318 | `const assignToKarigar = async (batchId: string, karigarId: s` |
-| `App.tsx` | Line 354 | `const updateAssignmentStatus = async (batchId: string, assig` |
-| `App.tsx` | Line 366 | `const handleQCSubmit = async (batchId: string, assignmentId:` |
-| `App.tsx` | Line 400 | `const handleTransaction = async (userId: string, amount: num` |
-| `App.tsx` | Line 420 | `const handleArchive = async (batchId: string) => {` |
+| `App.tsx` | Line 158 | `const fetchData = async () => {` |
+| `App.tsx` | Line 189 | `const handleLogin = async (identifier: string, secret: strin` |
+| `App.tsx` | Line 208 | `const handleSignUp = async (name: string, email: string, sec` |
+| `App.tsx` | Line 230 | `const handleLogout = async () => {` |
+| `App.tsx` | Line 237 | `const addUser = async (name: string, role: Role, mobile: str` |
+| `App.tsx` | Line 245 | `// 2. Check for connection errors (e.g., wrong function name` |
+| `App.tsx` | Line 252 | `// 3. Check for database errors returned INSIDE the function` |
+| `App.tsx` | Line 263 | `const updateUser = async (userId: string, updates: Partial<U` |
+| `App.tsx` | Line 277 | `const deleteUser = async (userId: string) => {` |
+| `App.tsx` | Line 288 | `const createBatch = async (batchData: Partial<Batch>) => {` |
+| `App.tsx` | Line 304 | `const finalizeCut = async (batchId: string, actualQty: SizeQ` |
+| `App.tsx` | Line 317 | `const assignToKarigar = async (batchId: string, karigarId: s` |
+| `App.tsx` | Line 353 | `const updateAssignmentStatus = async (batchId: string, assig` |
+| `App.tsx` | Line 365 | `const handleQCSubmit = async (batchId: string, assignmentId:` |
+| `App.tsx` | Line 399 | `const handleTransaction = async (userId: string, amount: num` |
+| `App.tsx` | Line 419 | `const handleArchive = async (batchId: string) => {` |
 | `Login.tsx` | Line 27 | `const handleSubmit = (e: React.FormEvent) => {` |
 | `ManagerDashboard.tsx` | Line 69 | `const handleShopifySync = () => {` |
 | `ManagerDashboard.tsx` | Line 85 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
