@@ -106,7 +106,6 @@ export default function App() {
         console.log('📡 Fetching profile for event:', event);
         
         try {
-        try {
           // Add timeout to prevent hanging
           const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
