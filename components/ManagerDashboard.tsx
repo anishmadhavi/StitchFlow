@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
 import { Plus, Scissors, UserPlus, ClipboardCheck, LayoutGrid, RefreshCw, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import { Batch, BatchStatus, Role, User, SizeQty, AssignmentStatus } from '../types';
 import { SIZE_OPTIONS } from '../constants';
@@ -81,16 +82,36 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setNewBatchForm(prev => ({ ...prev, imageUrl: reader.result as string }));
-        };
-        reader.readAsDataURL(file);
-    }
-  };
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    // 1. Create a unique filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `design-images/${fileName}`;
+
+    // 2. Upload to the 'designs' bucket
+    const { error: uploadError } = await supabase.storage
+      .from('designs')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    // 3. Get the Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('designs')
+      .getPublicUrl(filePath);
+
+    // 4. Update the form state with the real URL
+    setNewBatchForm(prev => ({ ...prev, imageUrl: publicUrl }));
+    alert("Image uploaded successfully!");
+
+  } catch (error: any) {
+    alert("Error uploading image: " + error.message);
+  }
+};
 
   const handleSubmitBatch = (e: React.FormEvent) => {
     e.preventDefault();
