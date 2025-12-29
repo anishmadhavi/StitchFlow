@@ -1,12 +1,11 @@
 /**
  * App.tsx
  * Purpose: Main Application Component.
- * Description: Handles high-level state (User, Batches), Authentication flows, and Role-Based Routing (Admin vs Manager vs Karigar vs QC).
- * Compatibility: Client-side React, compatible with Cloudflare Pages.
+ * Description: Handles persistent state via Supabase, Authentication, and Role-Based Routing.
  */
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from './src/supabaseClient';
+import { supabase } from './src/supabaseClient'; // Ensure this path is correct for your build
 import { AppState, Role, Batch, SizeQty, User, AssignmentStatus, BatchStatus, LedgerEntry, Assignment } from './types';
 import { AdminDashboard } from './components/AdminDashboard';
 import { MasterDashboard } from './components/MasterDashboard';
@@ -14,33 +13,56 @@ import { KarigarDashboard } from './components/KarigarDashboard';
 import { QCDashboard } from './components/QCDashboard';
 import { ManagerDashboard } from './components/ManagerDashboard';
 import { Login } from './components/Login';
-import { Users, LayoutDashboard, LogOut } from 'lucide-react';
+import { LayoutDashboard, LogOut } from 'lucide-react';
 import { SIZE_OPTIONS } from './constants';
 
 export default function App() {
   const [state, setState] = useState<AppState>({
     currentUser: null, 
-    users: [], // Initialized as empty for production
-    batches: [] // Initialized as empty for production
+    users: [], 
+    batches: [] 
   });
   
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // --- Data Fetching (Production Placeholder) ---
+  // --- 1. Real-time Data Fetching ---
   useEffect(() => {
-    // TODO: Connect to Supabase here to fetch real Users and Batches
-    // Example:
-    // const fetchData = async () => {
-    //    const { data: users } = await supabase.from('profiles').select('*');
-    //    const { data: batches } = await supabase.from('batches').select('*');
-    //    setState(prev => ({ ...prev, users: users || [], batches: batches || [] }));
-    // };
-    // fetchData();
-  }, []);
+    // Only fetch data if a user is logged in
+    if (!state.currentUser) return;
 
-  // --- Login Handler ---
-const handleLogin = async (identifier: string, secret: string) => {
+    const fetchData = async () => {
+       // Fetch Profiles (Users)
+       const { data: profiles } = await supabase
+         .from('profiles')
+         .select('*');
+
+       // Fetch Batches with their Assignments (Nested join)
+       const { data: batches } = await supabase
+         .from('batches')
+         .select('*, assignments(*)')
+         .order('created_at', { ascending: false });
+       
+       setState(prev => ({ 
+         ...prev, 
+         users: profiles || [], 
+         batches: batches || [] 
+       }));
+    };
+
+    fetchData();
+
+    // Setup Real-time Subscription to auto-refresh UI on any DB change
+    const channel = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public' }, fetchData)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [state.currentUser]);
+
+  // --- 2. Authentication Handlers ---
+  
+  const handleLogin = async (identifier: string, secret: string) => {
     setAuthLoading(true);
     setAuthError(null);
 
@@ -48,13 +70,14 @@ const handleLogin = async (identifier: string, secret: string) => {
     const email = identifier.includes('@') ? identifier : `${identifier}@stitchflow.app`;
 
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email,
       password: secret,
     });
 
     if (error) {
       setAuthError(error.message);
     } else {
+      // Fetch the full profile of the logged-in user
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -68,326 +91,210 @@ const handleLogin = async (identifier: string, secret: string) => {
 
   const handleSignUp = async (name: string, email: string, secret: string) => {
     setAuthLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // In Production: Call Supabase Auth SignUp here
-    const newAdmin: User = {
-      id: `admin_${Date.now()}`,
-      name: name,
-      role: Role.ADMIN,
-      walletBalance: 0,
-      ledger: [],
-      mobile: email, // Using email field as identifier
-      displayPin: secret
-    };
+    // Real Supabase Auth SignUp for Admin
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: secret,
+      options: {
+        data: { name, role: Role.ADMIN }
+      }
+    });
 
-    setState(prev => ({
-      ...prev,
-      users: [...prev.users, newAdmin],
-      currentUser: newAdmin
-    }));
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      alert("Admin account created! Please log in.");
+    }
     setAuthLoading(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setState(prev => ({ ...prev, currentUser: null }));
   };
 
-  // --- Actions ---
+  // --- 3. User & Staff Management ---
 
-  const addUser = (name: string, role: Role, mobile: string, pin: string) => {
-    // In production, this calls supabase Edge Function
-    const newUser: User = {
-      id: `${role.toLowerCase().substring(0, 1)}${Date.now()}`,
-      name,
-      role,
-      walletBalance: 0,
-      ledger: [],
-      avatarUrl: `https://i.pravatar.cc/150?u=${Date.now()}`,
-      mobile,
-      displayPin: pin
-    };
-    setState(prev => ({ ...prev, users: [...prev.users, newUser] }));
-  };
-
-  const updateUser = (userId: string, updates: Partial<User>) => {
-    setState(prev => {
-      const updatedUsers = prev.users.map(u => u.id === userId ? { ...u, ...updates } : u);
-      // Also update currentUser if it matches the updated user
-      const currentUser = prev.currentUser?.id === userId ? { ...prev.currentUser, ...updates } : prev.currentUser;
-      return {
-        ...prev,
-        users: updatedUsers,
-        currentUser
-      };
+  const addUser = async (name: string, role: Role, mobile: string, pin: string) => {
+    // Calls the "Add-User" Edge Function
+    const { data, error } = await supabase.functions.invoke('Add-User', {
+      body: { name, role, mobile, pin }
     });
+
+    if (error) {
+      alert("Error adding staff: " + error.message);
+    } else {
+      alert("Staff member created successfully!");
+    }
   };
 
-  const deleteUser = (userId: string) => {
-    if (userId === state.currentUser?.id) return; // Prevent self-delete
-    setState(prev => ({ ...prev, users: prev.users.filter(u => u.id !== userId) }));
+  const updateUser = async (userId: string, updates: Partial<User>) => {
+    // Map CamelCase back to snake_case for Supabase
+    const dbUpdates: any = {};
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update(dbUpdates)
+      .eq('id', userId);
+
+    if (error) alert("Update failed: " + error.message);
   };
 
-  const createBatch = (batchData: Partial<Batch>) => {
-    const newBatch: Batch = {
-      id: `b${Date.now()}`,
-      styleName: batchData.styleName!,
-      sku: batchData.sku!,
-      imageUrl: batchData.imageUrl!,
-      ratePerPiece: batchData.ratePerPiece!,
-      status: BatchStatus.PENDING_MATERIAL,
-      createdAt: new Date().toISOString(),
-      plannedQty: batchData.plannedQty!,
-      actualCutQty: {},
-      availableQty: {},
-      assignments: []
-    };
-    setState(prev => ({ ...prev, batches: [newBatch, ...prev.batches] }));
+  const deleteUser = async (userId: string) => {
+    if (userId === state.currentUser?.id) return; 
+    
+    // Note: Deleting from 'profiles' won't delete the Auth user unless 
+    // you have an Edge Function or Trigger. For now, we update the profile.
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) alert("Delete failed: " + error.message);
   };
 
-  const finalizeCut = (batchId: string, actualQty: SizeQty) => {
-    setState(prev => ({
-      ...prev,
-      batches: prev.batches.map(b => {
-        if (b.id !== batchId) return b;
-        // Filter out 0 quantities to keep data clean
-        const cleanQty: SizeQty = {};
-        Object.entries(actualQty).forEach(([k,v]) => {
-           if (v > 0) cleanQty[k] = v;
-        });
+  // --- 4. Production & Batch Logic ---
 
-        return {
-          ...b,
-          actualCutQty: cleanQty,
-          availableQty: { ...cleanQty }, // Initial available is the full cut
-          status: BatchStatus.CUTTING_DONE
-        };
+  const createBatch = async (batchData: Partial<Batch>) => {
+    const { error } = await supabase
+      .from('batches')
+      .insert([{
+        style_name: batchData.styleName,
+        sku: batchData.sku,
+        image_url: batchData.imageUrl,
+        rate_per_piece: batchData.ratePerPiece,
+        planned_qty: batchData.plannedQty,
+        available_qty: batchData.plannedQty, // Full initial stock
+        status: 'Pending Material'
+      }]);
+
+    if (error) alert("Error creating batch: " + error.message);
+  };
+
+  const finalizeCut = async (batchId: string, actualQty: SizeQty) => {
+    const { error } = await supabase
+      .from('batches')
+      .update({
+        actual_cut_qty: actualQty,
+        available_qty: actualQty,
+        status: 'Cutting Done'
       })
-    }));
+      .eq('id', batchId);
+
+    if (error) alert("Error finalizing cut: " + error.message);
   };
 
-  const assignToKarigar = (batchId: string, karigarId: string, qty: SizeQty) => {
+  const assignToKarigar = async (batchId: string, karigarId: string, qty: SizeQty) => {
     const karigar = state.users.find(u => u.id === karigarId);
     if (!karigar) return;
 
-    setState(prev => ({
-      ...prev,
-      batches: prev.batches.map(b => {
-        if (b.id !== batchId) return b;
-        
-        // Decrement available qty
-        const newAvailable = { ...b.availableQty };
-        Object.entries(qty).forEach(([size, amount]) => {
-          if (amount > 0) {
-            newAvailable[size] = (newAvailable[size] || 0) - amount;
-          }
-        });
+    // 1. Calculate remaining stock
+    const batch = state.batches.find(b => b.id === batchId);
+    if (!batch) return;
 
-        // Filter out 0 assignment
-        const cleanAssignedQty: SizeQty = {};
-        Object.entries(qty).forEach(([k,v]) => { if(v>0) cleanAssignedQty[k] = v });
-
-        const newAssignment = {
-          id: `a${Date.now()}`,
-          karigarId,
-          karigarName: karigar.name,
-          assignedQty: cleanAssignedQty,
-          status: AssignmentStatus.ASSIGNED,
-          assignedAt: new Date().toISOString()
-        };
-
-        return {
-          ...b,
-          availableQty: newAvailable,
-          assignments: [...b.assignments, newAssignment],
-          status: BatchStatus.IN_PRODUCTION
-        };
-      })
-    }));
-  };
-
-  const updateAssignmentStatus = (batchId: string, assignmentId: string, newStatus: AssignmentStatus) => {
-    setState(prev => {
-      let updatedBatches = prev.batches.map(b => {
-        if (b.id !== batchId) return b;
-        
-        // Handle Rejection Logic (Return stock)
-        let newAvailable = { ...b.availableQty };
-        if (newStatus === AssignmentStatus.REJECTED) {
-            const assignment = b.assignments.find(a => a.id === assignmentId);
-            if (assignment) {
-              Object.entries(assignment.assignedQty).forEach(([size, amount]) => {
-                newAvailable[size] = (newAvailable[size] || 0) + amount;
-              });
-            }
-        }
-
-        return {
-          ...b,
-          availableQty: newAvailable,
-          assignments: b.assignments.map(a => 
-            a.id === assignmentId ? { ...a, status: newStatus, completedAt: newStatus === AssignmentStatus.STITCHED ? new Date().toISOString() : a.completedAt } : a
-          )
-        };
-      });
-      return { ...prev, batches: updatedBatches };
+    const newAvailable = { ...batch.availableQty };
+    Object.entries(qty).forEach(([size, amount]) => {
+      newAvailable[size] = (newAvailable[size] || 0) - amount;
     });
+
+    // 2. Insert Assignment
+    const { error: assignError } = await supabase
+      .from('assignments')
+      .insert([{
+        batch_id: batchId,
+        karigar_id: karigarId,
+        karigar_name: karigar.name,
+        assigned_qty: qty,
+        status: 'Assigned'
+      }]);
+
+    // 3. Update Batch Available Stock
+    const { error: batchError } = await supabase
+      .from('batches')
+      .update({ 
+        available_qty: newAvailable,
+        status: 'In Production' 
+      })
+      .eq('id', batchId);
+
+    if (assignError || batchError) alert("Error during assignment");
   };
 
-  const handleQCSubmit = (batchId: string, assignmentId: string, passedQty: SizeQty) => {
+  const updateAssignmentStatus = async (batchId: string, assignmentId: string, newStatus: AssignmentStatus) => {
+    const { error } = await supabase
+      .from('assignments')
+      .update({ 
+        status: newStatus,
+        completed_at: newStatus === 'Stitched' ? new Date().toISOString() : null
+      })
+      .eq('id', assignmentId);
+
+    if (error) alert("Update failed: " + error.message);
+  };
+
+  const handleQCSubmit = async (batchId: string, assignmentId: string, passedQty: SizeQty) => {
     const batch = state.batches.find(b => b.id === batchId);
     if (!batch) return;
     const assignment = batch.assignments.find(a => a.id === assignmentId);
     if (!assignment) return;
 
-    // Calculate Split: Rework vs Passed
-    const currentAssigned = assignment.assignedQty;
-    const reworkQty: SizeQty = {};
-    const finalPassedQty: SizeQty = {};
-    
-    let hasRework = false;
-    let hasPassed = false;
-
-    Object.entries(currentAssigned).forEach(([size, total]) => {
-        const passed = passedQty[size] || 0;
-        const rework = (total as number) - passed;
-        
-        if (passed > 0) {
-            finalPassedQty[size] = passed;
-            hasPassed = true;
-        }
-        if (rework > 0) {
-            reworkQty[size] = rework;
-            hasRework = true;
-        }
-    });
-
-    const totalPassedCount = Object.values(finalPassedQty).reduce((a, b) => a + b, 0);
+    const totalPassedCount = Object.values(passedQty).reduce((a, b) => a + (b as number), 0);
     const amount = totalPassedCount * batch.ratePerPiece;
 
-    setState(prev => {
-      // 1. Update User Ledger (Pay only for passed)
-      const updatedUsers = prev.users.map(u => {
-        if (u.id !== assignment.karigarId) return u;
-        
-        if (amount > 0) {
-            const newLedgerEntry: LedgerEntry = {
-              id: `l${Date.now()}`,
-              date: new Date().toISOString(),
-              description: `Work Completed: ${batch.styleName} (${totalPassedCount} pcs)`,
-              amount: amount,
-              type: 'CREDIT',
-              relatedBatchId: batchId
-            };
-            return {
-              ...u,
-              walletBalance: u.walletBalance + amount,
-              ledger: [...u.ledger, newLedgerEntry]
-            };
-        }
-        return u;
+    // 1. Mark current assignment as QC Passed
+    const { error: assignError } = await supabase
+      .from('assignments')
+      .update({ status: 'QC Passed' })
+      .eq('id', assignmentId);
+
+    // 2. Add to Ledger and Wallet
+    if (amount > 0) {
+      await supabase.from('ledger_entries').insert([{
+        user_id: assignment.karigarId,
+        description: `QC Passed: ${batch.styleName} (${totalPassedCount} pcs)`,
+        amount: amount,
+        type: 'CREDIT',
+        related_batch_id: batchId
+      }]);
+
+      await supabase.rpc('increment_wallet', { 
+        user_id: assignment.karigarId, 
+        amount: amount 
       });
+    }
 
-      // 2. Update Batch Assignments (Split logic)
-      const updatedBatches = prev.batches.map(b => {
-        if (b.id !== batchId) return b;
-        
-        let newAssignments = [...b.assignments];
-        
-        // CASE A: All Passed
-        if (!hasRework && hasPassed) {
-             newAssignments = newAssignments.map(a => 
-                 a.id === assignmentId ? { ...a, status: AssignmentStatus.QC_PASSED } : a
-             );
-        }
-        // CASE B: All Failed/Rework
-        else if (hasRework && !hasPassed) {
-             newAssignments = newAssignments.map(a => 
-                 a.id === assignmentId ? { ...a, status: AssignmentStatus.QC_REWORK } : a
-             );
-        }
-        // CASE C: Partial Split
-        else if (hasRework && hasPassed) {
-             // 1. Modify the EXISTING assignment to contain only the Rework items
-             newAssignments = newAssignments.map(a => 
-                 a.id === assignmentId ? { 
-                     ...a, 
-                     assignedQty: reworkQty, 
-                     status: AssignmentStatus.QC_REWORK 
-                 } : a
-             );
-
-             // 2. Create a NEW assignment for the Passed items (Archived/Completed state)
-             const passedAssignment: Assignment = {
-                 ...assignment,
-                 id: `${assignment.id}_passed_${Date.now()}`,
-                 assignedQty: finalPassedQty,
-                 status: AssignmentStatus.QC_PASSED,
-                 completedAt: new Date().toISOString()
-             };
-             newAssignments.push(passedAssignment);
-        }
-
-        return {
-          ...b,
-          assignments: newAssignments
-        };
-      });
-
-      // SYNC CURRENT USER
-      const currentUser = prev.currentUser && updatedUsers.find(u => u.id === prev.currentUser!.id) 
-        ? updatedUsers.find(u => u.id === prev.currentUser!.id)! 
-        : prev.currentUser;
-
-      return {
-        ...prev,
-        currentUser,
-        users: updatedUsers,
-        batches: updatedBatches
-      };
-    });
+    if (assignError) alert("QC processing error");
   };
 
-  const handleTransaction = (userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') => {
-    setState(prev => {
-      const updatedUsers = prev.users.map(u => {
-        if (u.id !== userId) return u;
-        return {
-          ...u,
-          walletBalance: type === 'CREDIT' ? u.walletBalance + amount : u.walletBalance - amount,
-          ledger: [...u.ledger, {
-            id: `txn${Date.now()}`,
-            date: new Date().toISOString(),
-            description: remark || (type === 'CREDIT' ? 'Manual Credit / Opening Bal' : 'Manual Debit / Advance'),
-            amount: amount,
-            type: type
-          }]
-        };
-      });
+  const handleTransaction = async (userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') => {
+    const signedAmount = type === 'CREDIT' ? amount : -amount;
 
-      // SYNC CURRENT USER
-      const currentUser = prev.currentUser && updatedUsers.find(u => u.id === prev.currentUser!.id) 
-        ? updatedUsers.find(u => u.id === prev.currentUser!.id)! 
-        : prev.currentUser;
+    const { error: ledgerError } = await supabase
+      .from('ledger_entries')
+      .insert([{
+        user_id: userId,
+        description: remark || (type === 'CREDIT' ? 'Manual Credit' : 'Manual Debit'),
+        amount: amount,
+        type: type
+      }]);
 
-      return {
-        ...prev,
-        currentUser,
-        users: updatedUsers
-      };
+    const { error: walletError } = await supabase.rpc('increment_wallet', { 
+      user_id: userId, 
+      amount: signedAmount 
     });
+
+    if (ledgerError || walletError) alert("Transaction failed");
   };
 
-  const handleArchive = (batchId: string) => {
-    setState(prev => ({
-      ...prev,
-      batches: prev.batches.map(b => b.id === batchId ? { ...b, status: BatchStatus.ARCHIVED } : b)
-    }));
+  const handleArchive = async (batchId: string) => {
+    const { error } = await supabase
+      .from('batches')
+      .update({ status: 'Archived' })
+      .eq('id', batchId);
+    
+    if (error) alert("Archive failed");
   };
 
   // --- Render ---
 
-  // 1. Show Login Screen if no user
   if (!state.currentUser) {
     return (
       <Login 
@@ -399,58 +306,43 @@ const handleLogin = async (identifier: string, secret: string) => {
     );
   }
 
-  // 2. Show Main App
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top Navbar */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <LayoutDashboard className="text-white w-5 h-5" />
-            </div>
+            <div className="bg-blue-600 p-2 rounded-lg"><LayoutDashboard className="text-white w-5 h-5" /></div>
             <h1 className="text-xl font-bold text-gray-900 hidden sm:block">StitchFlow</h1>
           </div>
           
           <div className="flex items-center gap-4">
              <div className="flex items-center gap-2">
-                 <img src={state.currentUser.avatarUrl || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full border bg-gray-200 object-cover" alt="" />
-                 <div className="text-sm hidden sm:block text-right">
+                 <img src={state.currentUser.avatarUrl || 'https://i.pravatar.cc/150'} className="w-8 h-8 rounded-full border object-cover" alt="" />
+                 <div className="text-sm hidden sm:block">
                     <p className="font-medium text-gray-900">{state.currentUser.name}</p>
                     <p className="text-xs text-gray-500 uppercase">{state.currentUser.role}</p>
                  </div>
              </div>
-             <button onClick={handleLogout} className="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-gray-100">
-               <LogOut size={20} />
-             </button>
+             <button onClick={handleLogout} className="text-gray-400 hover:text-red-600 p-2"><LogOut size={20} /></button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
         {state.currentUser.role === Role.ADMIN && (
           <AdminDashboard 
-            batches={state.batches}
-            users={state.users}
-            onCreateBatch={createBatch}
-            onPayKarigar={handleTransaction}
-            onArchiveBatch={handleArchive}
-            onAddUser={addUser}
-            onDeleteUser={deleteUser}
-            onAssignToKarigar={assignToKarigar}
+            batches={state.batches} users={state.users}
+            onCreateBatch={createBatch} onPayKarigar={handleTransaction}
+            onArchiveBatch={handleArchive} onAddUser={addUser}
+            onDeleteUser={deleteUser} onAssignToKarigar={assignToKarigar}
           />
         )}
 
         {state.currentUser.role === Role.MANAGER && (
           <ManagerDashboard 
-            batches={state.batches}
-            users={state.users}
-            onCreateBatch={createBatch}
-            onFinalizeCut={finalizeCut}
-            onAssignToKarigar={assignToKarigar}
-            onSubmitQC={handleQCSubmit}
+            batches={state.batches} users={state.users}
+            onCreateBatch={createBatch} onFinalizeCut={finalizeCut}
+            onAssignToKarigar={assignToKarigar} onSubmitQC={handleQCSubmit}
           />
         )}
 
@@ -458,15 +350,13 @@ const handleLogin = async (identifier: string, secret: string) => {
           <MasterDashboard 
             batches={state.batches}
             karigars={state.users.filter(u => u.role === Role.KARIGAR)}
-            onFinalizeCut={finalizeCut}
-            onAssignToKarigar={assignToKarigar}
+            onFinalizeCut={finalizeCut} onAssignToKarigar={assignToKarigar}
           />
         )}
 
         {state.currentUser.role === Role.KARIGAR && (
           <KarigarDashboard 
-            currentUser={state.currentUser}
-            batches={state.batches}
+            currentUser={state.currentUser} batches={state.batches}
             onAcceptAssignment={(bid, aid) => updateAssignmentStatus(bid, aid, AssignmentStatus.ACCEPTED)}
             onRejectAssignment={(bid, aid) => updateAssignmentStatus(bid, aid, AssignmentStatus.REJECTED)}
             onMarkComplete={(bid, aid) => updateAssignmentStatus(bid, aid, AssignmentStatus.STITCHED)}
@@ -476,8 +366,7 @@ const handleLogin = async (identifier: string, secret: string) => {
 
         {state.currentUser.role === Role.QC && (
           <QCDashboard 
-            batches={state.batches}
-            onSubmitQC={handleQCSubmit}
+            batches={state.batches} onSubmitQC={handleQCSubmit}
           />
         )}
       </main>
