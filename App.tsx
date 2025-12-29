@@ -27,21 +27,63 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   // --- Data Fetching (Production Placeholder) ---
-  useEffect(() => {
-    // TODO: Connect to Supabase here to fetch real Users and Batches
-    // Example:
-    // const fetchData = async () => {
-    //    const { data: users } = await supabase.from('profiles').select('*');
-    //    const { data: batches } = await supabase.from('batches').select('*');
-    //    setState(prev => ({ ...prev, users: users || [], batches: batches || [] }));
-    // };
-    // fetchData();
+useEffect(() => {
+    const fetchData = async () => {
+      // Fetch batches with their nested assignments
+      const { data: batches } = await supabase
+        .from('batches')
+        .select('*, assignments(*)')
+        .order('created_at', { ascending: false });
+      
+      // Fetch profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*');
+
+      setState(prev => ({ 
+        ...prev, 
+        users: profiles || [], 
+        batches: batches || [] 
+      }));
+    };
+
+    fetchData();
+
+    // Set up real-time subscription to refresh UI on database changes
+    const channel = supabase.channel('db-changes')
+      .on('postgres_changes', { event: '*', schema: 'public' }, fetchData)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   // --- Login Handler ---
-  const handleLogin = async (identifier: string, secret: string) => {
+const handleLogin = async (identifier: string, secret: string) => {
     setAuthLoading(true);
     setAuthError(null);
+
+    // If identifier doesn't have @, assume it's a mobile number for staff
+    const email = identifier.includes('@') ? identifier : `${identifier}@stitchflow.app`;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: secret,
+    });
+
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      // Fetch the full profile after successful auth
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profile) setState(prev => ({ ...prev, currentUser: profile }));
+    }
+    setAuthLoading(false);
+  };
 
     // MOCK LOGIN LOGIC (Replace with Supabase in Production)
     // 1. Determine if it's email (Admin) or Mobile (Staff)
@@ -135,21 +177,20 @@ export default function App() {
     setState(prev => ({ ...prev, users: prev.users.filter(u => u.id !== userId) }));
   };
 
-  const createBatch = (batchData: Partial<Batch>) => {
-    const newBatch: Batch = {
-      id: `b${Date.now()}`,
-      styleName: batchData.styleName!,
-      sku: batchData.sku!,
-      imageUrl: batchData.imageUrl!,
-      ratePerPiece: batchData.ratePerPiece!,
-      status: BatchStatus.PENDING_MATERIAL,
-      createdAt: new Date().toISOString(),
-      plannedQty: batchData.plannedQty!,
-      actualCutQty: {},
-      availableQty: {},
-      assignments: []
-    };
-    setState(prev => ({ ...prev, batches: [newBatch, ...prev.batches] }));
+const createBatch = async (batchData: Partial<Batch>) => {
+    const { error } = await supabase
+      .from('batches')
+      .insert([{
+        style_name: batchData.styleName,
+        sku: batchData.sku,
+        image_url: batchData.imageUrl,
+        rate_per_piece: batchData.ratePerPiece,
+        planned_qty: batchData.plannedQty,
+        available_qty: batchData.plannedQty, // Initially, all planned are available
+        status: 'Pending Material'
+      }]);
+
+    if (error) alert("Error creating batch: " + error.message);
   };
 
   const finalizeCut = (batchId: string, actualQty: SizeQty) => {
