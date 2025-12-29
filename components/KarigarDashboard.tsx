@@ -54,17 +54,32 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   const isAdvance = currentUser.walletBalance < 0;
 
   // --- Profile Photo Handler ---
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-        setIsUploading(true);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            onUpdateUser(currentUser.id, { avatarUrl: reader.result as string });
-            setIsUploading(false);
-        };
-        reader.readAsDataURL(file);
+    if (!file) return;
+
+    setIsUploading(true);
+    const filePath = `avatars/${currentUser.id}.jpg`;
+
+    // Save selfie to Storage
+    const { error: uploadError } = await supabase.storage
+      .from('designs')
+      .upload(filePath, file, { upsert: true });
+
+    if (!uploadError) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('designs')
+        .getPublicUrl(filePath);
+      
+      // Persist the new photo URL to the database
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', currentUser.id);
+
+      onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
     }
+    setIsUploading(false);
   };
 
   return (
