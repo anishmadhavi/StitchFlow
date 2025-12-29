@@ -1,4 +1,4 @@
 ### 📜 Recent Changes
 | Status | File Path |
 | :--- | :--- |
-| M | index.html |
+| M | src/supabaseClient.ts |
