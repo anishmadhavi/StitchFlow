@@ -1,4 +1,4 @@
 ### 📜 Recent Changes
 | Status | File Path |
 | :--- | :--- |
-| M | components/KarigarDashboard.tsx |
+| M | components/QCDashboard.tsx |

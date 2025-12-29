@@ -49,7 +49,7 @@
 | `KarigarDashboard.tsx` | Line 53 | `const calculateTotalQty = (qty: SizeQty) => Object.values(qt` |
 | `KarigarDashboard.tsx` | Line 58 | `const handlePhotoUpload = async (e: React.ChangeEvent<HTMLIn` |
 | `QCDashboard.tsx` | Line 34 | `const openInspectModal = (item: any) => {` |
-| `QCDashboard.tsx` | Line 40 | `const handleSubmit = (e: React.FormEvent) => {` |
-| `QCDashboard.tsx` | Line 48 | `const handleQtyChange = (size: string, val: number) => {` |
-| `QCDashboard.tsx` | Line 56 | `const totalPassed = (Object.values(qcForm) as number[]).redu` |
-| `QCDashboard.tsx` | Line 172 | `function formatDate(dateStr?: string) {` |
+| `QCDashboard.tsx` | Line 40 | `const handleSubmit = async (e: React.FormEvent) => {` |
+| `QCDashboard.tsx` | Line 74 | `const handleQtyChange = (size: string, val: number) => {` |
+| `QCDashboard.tsx` | Line 82 | `const totalPassed = (Object.values(qcForm) as number[]).redu` |
+| `QCDashboard.tsx` | Line 198 | `function formatDate(dateStr?: string) {` |
