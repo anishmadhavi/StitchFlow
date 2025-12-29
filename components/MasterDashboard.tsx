@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
 import { Scissors, UserPlus, ChevronLeft, ZoomIn, X, Layers } from 'lucide-react';
 import { Batch, BatchStatus, Role, User, SizeQty } from '../types';
 import { SIZE_OPTIONS } from '../constants';
