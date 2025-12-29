@@ -47,7 +47,7 @@
 | `MasterDashboard.tsx` | Line 75 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 157 | `const totalAvailable = (Object.values(batch.availableQty) as` |
 | `KarigarDashboard.tsx` | Line 52 | `const calculateTotalQty = (qty: SizeQty) => Object.values(qt` |
-| `KarigarDashboard.tsx` | Line 57 | `const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputEle` |
+| `KarigarDashboard.tsx` | Line 57 | `const handlePhotoUpload = async (e: React.ChangeEvent<HTMLIn` |
 | `QCDashboard.tsx` | Line 33 | `const openInspectModal = (item: any) => {` |
 | `QCDashboard.tsx` | Line 39 | `const handleSubmit = (e: React.FormEvent) => {` |
 | `QCDashboard.tsx` | Line 47 | `const handleQtyChange = (size: string, val: number) => {` |
