@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
 import { ClipboardCheck, Check, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Batch, AssignmentStatus, SizeQty } from '../types';
 import { Button, Card, Badge, Modal } from './Shared';
