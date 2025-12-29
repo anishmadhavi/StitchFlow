@@ -9,17 +9,17 @@
 | `App.tsx` | Line 87 | `const createBatch = async (batchData: Partial<Batch>) => {` |
 | `App.tsx` | Line 105 | `const addUser = async (name: string, role: Role, mobile: str` |
 | `Login.tsx` | Line 27 | `const handleSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 68 | `const handleShopifySync = () => {` |
-| `ManagerDashboard.tsx` | Line 84 | `const handleImageUpload = (e: React.ChangeEvent<HTMLInputEle` |
-| `ManagerDashboard.tsx` | Line 95 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 109 | `const openCutModal = (batch: Batch) => {` |
-| `ManagerDashboard.tsx` | Line 114 | `const handleCutSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 120 | `const openAssignModal = (batch: Batch) => {` |
-| `ManagerDashboard.tsx` | Line 127 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 138 | `const openInspectModal = (item: any) => {` |
-| `ManagerDashboard.tsx` | Line 144 | `const handleQCSubmit = (e: React.FormEvent) => {` |
-| `ManagerDashboard.tsx` | Line 152 | `const handleQCQtyChange = (size: string, val: number) => {` |
-| `ManagerDashboard.tsx` | Line 249 | `const totalAvailable = (Object.values(batch.availableQty) as` |
+| `ManagerDashboard.tsx` | Line 69 | `const handleShopifySync = () => {` |
+| `ManagerDashboard.tsx` | Line 85 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
+| `ManagerDashboard.tsx` | Line 116 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
+| `ManagerDashboard.tsx` | Line 130 | `const openCutModal = (batch: Batch) => {` |
+| `ManagerDashboard.tsx` | Line 135 | `const handleCutSubmit = (e: React.FormEvent) => {` |
+| `ManagerDashboard.tsx` | Line 141 | `const openAssignModal = (batch: Batch) => {` |
+| `ManagerDashboard.tsx` | Line 148 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
+| `ManagerDashboard.tsx` | Line 159 | `const openInspectModal = (item: any) => {` |
+| `ManagerDashboard.tsx` | Line 165 | `const handleQCSubmit = (e: React.FormEvent) => {` |
+| `ManagerDashboard.tsx` | Line 173 | `const handleQCQtyChange = (size: string, val: number) => {` |
+| `ManagerDashboard.tsx` | Line 270 | `const totalAvailable = (Object.values(batch.availableQty) as` |
 | `AdminDashboard.tsx` | Line 80 | `const getActiveAssignments = (userId: string) => {` |
 | `AdminDashboard.tsx` | Line 88 | `const handleShopifySync = () => {` |
 | `AdminDashboard.tsx` | Line 104 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
