@@ -33,12 +33,48 @@ export default function App() {
   // 🔐 Restore session on page reload
   useEffect(() => {
     let mounted = true;
+    let isInitializing = false; // Prevent duplicate fetches
+
+    const loadProfile = async (userId: string, source: string) => {
+      console.log(`📡 Fetching profile from ${source}...`);
+      
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (!mounted) return null;
+        
+        if (error) {
+          console.error('❌ Profile fetch error:', error);
+          setAuthError(`Profile error: ${error.message}`);
+          setState(prev => ({ ...prev, currentUser: null }));
+          return null;
+        } else {
+          console.log('✅ Profile loaded:', profile.name);
+          setState(prev => ({ ...prev, currentUser: profile }));
+          setAuthError(null);
+          return profile;
+        }
+      } catch (error) {
+        console.error('💥 Profile fetch exception:', error);
+        setAuthError('Failed to load profile');
+        return null;
+      }
+    };
 
     const initializeAuth = async () => {
+      if (isInitializing) {
+        console.log('⏭️ Already initializing, skipping...');
+        return;
+      }
+      
+      isInitializing = true;
       console.log('🔍 Initializing auth...');
       
       try {
-        // Get current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (!mounted) return;
@@ -52,27 +88,8 @@ export default function App() {
         
         if (session?.user) {
           console.log('✅ Session found:', session.user.id);
-          console.log('📡 Fetching profile...');
-          
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (!mounted) return;
-          
-          if (profileError) {
-            console.error('❌ Profile error:', profileError);
-            setAuthError(`Profile error: ${profileError.message}`);
-            setState(prev => ({ ...prev, currentUser: null }));
-            setAuthLoading(false);
-          } else {
-            console.log('✅ Profile loaded:', profile.name);
-            setState(prev => ({ ...prev, currentUser: profile }));
-            setAuthError(null);
-            setAuthLoading(false);
-          }
+          await loadProfile(session.user.id, 'initializeAuth');
+          setAuthLoading(false);
         } else {
           console.log('ℹ️ No session found');
           setAuthLoading(false);
@@ -80,17 +97,25 @@ export default function App() {
       } catch (error) {
         console.error('💥 Init error:', error);
         setAuthLoading(false);
+      } finally {
+        isInitializing = false;
       }
     };
 
     // Initialize immediately
     initializeAuth();
 
-    // Listen for auth changes
+    // Listen for auth changes (but skip INITIAL_SESSION since initializeAuth handles it)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 Auth event:', event, 'Session exists:', !!session);
       
       if (!mounted) return;
+      
+      // Skip INITIAL_SESSION and SIGNED_IN during initialization
+      if (event === 'INITIAL_SESSION' || (event === 'SIGNED_IN' && isInitializing)) {
+        console.log('⏭️ Skipping event, handled by initializeAuth');
+        return;
+      }
       
       if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
@@ -100,47 +125,15 @@ export default function App() {
         return;
       }
       
-      // Handle INITIAL_SESSION, SIGNED_IN, and TOKEN_REFRESHED
-      if (session?.user && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-        console.log('👤 User authenticated:', session.user.id);
-        console.log('📡 Fetching profile for event:', event);
-        
-        try {
-          // Add timeout to prevent hanging
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-          );
-          
-          const fetchPromise = supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          const { data: profile, error } = await Promise.race([fetchPromise, timeoutPromise]);
-
-          if (!mounted) return;
-          
-          if (error) {
-            console.error('❌ Profile fetch error:', error);
-            setAuthError(`Profile error: ${error.message}`);
-            setState(prev => ({ ...prev, currentUser: null }));
-          } else {
-            console.log('✅ Profile set:', profile.name);
-            setState(prev => ({ ...prev, currentUser: profile }));
-            setAuthError(null);
-          }
-        } catch (error) {
-          console.error('💥 Profile fetch exception:', error);
-          setAuthError('Failed to load profile: ' + error.message);
-        } finally {
-          console.log('⏹️ Setting authLoading to false');
-          setAuthLoading(false);
-        }
-      } else if (event === 'INITIAL_SESSION' && !session) {
-        // No session on initial load
-        console.log('ℹ️ Initial session: no user');
+      if (session?.user && event === 'SIGNED_IN') {
+        console.log('👤 New login detected');
+        await loadProfile(session.user.id, 'SIGNED_IN event');
         setAuthLoading(false);
+      }
+      
+      if (event === 'TOKEN_REFRESHED' && session?.user) {
+        console.log('🔄 Token refreshed');
+        await loadProfile(session.user.id, 'TOKEN_REFRESHED');
       }
     });
 
