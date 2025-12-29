@@ -23,11 +23,13 @@ export default function App() {
     batches: []
   });
 
-  const [authLoading, setAuthLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
 
   // 🔐 Restore session on page reload
 useEffect(() => {
+  setAuthLoading(true);
+
   const { data: subscription } = supabase.auth.onAuthStateChange(
     async (_event, session) => {
       try {
