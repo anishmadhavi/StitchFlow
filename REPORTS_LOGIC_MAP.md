@@ -49,6 +49,7 @@
 | `MasterDashboard.tsx` | Line 88 | `const handleAssignSubmit = async (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 196 | `const totalAvailable = (Object.values(batch.availableQty) as` |
 | `KarigarDashboard.tsx` | Line 53 | `const calculateTotalQty = (qty: SizeQty) => Object.values(qt` |
+| `KarigarDashboard.tsx` | Line 55 | `const isAdvance = (currentUser.walletBalance ?? 0) < 0;` |
 | `KarigarDashboard.tsx` | Line 58 | `const handlePhotoUpload = async (e: React.ChangeEvent<HTMLIn` |
 | `QCDashboard.tsx` | Line 34 | `const openInspectModal = (item: any) => {` |
 | `QCDashboard.tsx` | Line 40 | `const handleSubmit = async (e: React.FormEvent) => {` |
