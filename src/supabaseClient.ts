@@ -4,10 +4,12 @@ const supabaseUrl = 'https://sdrvifpydrlykhbnvtxi.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkcnZpZnB5ZHJseWtoYm52dHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NTE3MjIsImV4cCI6MjA4MjQyNzcyMn0.7ADcYdm1NzJBeOgoKRAbh7q86upbM_54UXWGMDoGpHY';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
+auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
-    storageKey: 'stitchflow-auth', // 🔑 CRITICAL FIX
+    detectSessionInUrl: true, // Set to true to help Supabase recover sessions
+    storageKey: 'stitchflow-v1', // 🆕 Change the name slightly (e.g., add -v1) 
+                                 // to force the browser to start fresh
+    storage: window.localStorage,
   },
 });
