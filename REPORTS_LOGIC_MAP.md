@@ -41,11 +41,11 @@
 | `AdminDashboard.tsx` | Line 183 | `const openPassbook = (userId: string) => {` |
 | `AdminDashboard.tsx` | Line 188 | `const submitPayment = (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 50 | `const openCutModal = (batch: Batch) => {` |
-| `MasterDashboard.tsx` | Line 55 | `const handleCutSubmit = (e: React.FormEvent) => {` |
-| `MasterDashboard.tsx` | Line 61 | `const openAssignModal = (batch: Batch) => {` |
-| `MasterDashboard.tsx` | Line 71 | `const handleSelectKarigar = (karigarId: string) => {` |
-| `MasterDashboard.tsx` | Line 76 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
-| `MasterDashboard.tsx` | Line 158 | `const totalAvailable = (Object.values(batch.availableQty) as` |
+| `MasterDashboard.tsx` | Line 55 | `const handleCutSubmit = async (e: React.FormEvent) => {` |
+| `MasterDashboard.tsx` | Line 73 | `const openAssignModal = (batch: Batch) => {` |
+| `MasterDashboard.tsx` | Line 83 | `const handleSelectKarigar = (karigarId: string) => {` |
+| `MasterDashboard.tsx` | Line 88 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
+| `MasterDashboard.tsx` | Line 170 | `const totalAvailable = (Object.values(batch.availableQty) as` |
 | `KarigarDashboard.tsx` | Line 53 | `const calculateTotalQty = (qty: SizeQty) => Object.values(qt` |
 | `KarigarDashboard.tsx` | Line 58 | `const handlePhotoUpload = async (e: React.ChangeEvent<HTMLIn` |
 | `QCDashboard.tsx` | Line 34 | `const openInspectModal = (item: any) => {` |
