@@ -28,42 +28,38 @@ export default function App() {
 
   // 🔐 Restore session on page reload
 useEffect(() => {
+  // Start loading immediately on page refresh
   setAuthLoading(true);
 
   const { data: subscription } = supabase.auth.onAuthStateChange(
-    async (_event, session) => {
+    async (event, session) => {
       try {
-        // ⛔ Logged out
-        if (!session?.user) {
+        if (session?.user) {
+          // Fetch profile if session exists
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) {
+            setAuthError("Profile not found. Contact Admin.");
+            setState(prev => ({ ...prev, currentUser: null }));
+          } else {
+            setState(prev => ({ ...prev, currentUser: profile }));
+          }
+        } else {
+          // Clear user if logged out
           setState(prev => ({ ...prev, currentUser: null }));
-          return;
         }
-
-        // ✅ Logged in / restored
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error("Profile fetch failed:", error);
-          setAuthError("Unable to load user profile");
-          return;
-        }
-
-        setState(prev => ({ ...prev, currentUser: profile }));
-
       } finally {
-        // ✅ ALWAYS stop spinner (success or failure)
+        // Stop the loading spinner only after we know the profile status
         setAuthLoading(false);
       }
     }
   );
 
-  return () => {
-    subscription.subscription.unsubscribe();
-  };
+  return () => subscription.subscription.unsubscribe();
 }, []);
 
   // --- 1. Real-time Data Fetching ---
@@ -102,31 +98,23 @@ useEffect(() => {
 
   // --- 2. Authentication Handlers ---
   
-  const handleLogin = async (identifier: string, secret: string) => {
+const handleLogin = async (identifier: string, secret: string) => {
     setAuthLoading(true);
     setAuthError(null);
 
-    // Bridge mobile-only UI with Supabase email-based Auth
     const email = identifier.includes('@') ? identifier : `${identifier}@stitchflow.app`;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: secret,
     });
 
     if (error) {
       setAuthError(error.message);
-    } else {
-      // Fetch the full profile of the logged-in user
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-      
-      if (profile) setState(prev => ({ ...prev, currentUser: profile }));
+      setAuthLoading(false); // Only stop loading if there is an error
     }
-    setAuthLoading(false);
+    // We REMOVE the manual profile fetch here. 
+    // The useEffect listener below will handle it automatically.
   };
 
 const handleSignUp = async (name: string, email: string, secret: string) => {
