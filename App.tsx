@@ -17,6 +17,10 @@ import { LayoutDashboard, LogOut } from 'lucide-react';
 import { SIZE_OPTIONS } from './constants';
 
 export default function App() {
+  // Debug: Log when App mounts
+  console.log('🚀 App component mounting...');
+  console.log('📦 localStorage stitchflow-v2:', localStorage.getItem('stitchflow-v2') ? 'EXISTS' : 'MISSING');
+
   const [state, setState] = useState<AppState>({
     currentUser: null,
     users: [],
@@ -27,71 +31,105 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   // 🔐 Restore session on page reload
-useEffect(() => {
-  // Check for existing session first
-  const initializeAuth = async () => {
-    setAuthLoading(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+  useEffect(() => {
+    let mounted = true;
 
-        if (error) {
-          setAuthError("Profile not found. Contact Admin.");
-          setState(prev => ({ ...prev, currentUser: null }));
-        } else {
-          setState(prev => ({ ...prev, currentUser: profile }));
-        }
-      }
-    } catch (error) {
-      console.error("Session initialization error:", error);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  initializeAuth();
-
-  // Then set up the listener for future auth changes
-  const { data: subscription } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
-      console.log("Auth state changed:", event);
+    const initializeAuth = async () => {
+      console.log('🔍 Initializing auth...');
       
       try {
+        // Get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (!mounted) return; // Component unmounted
+        
+        if (sessionError) {
+          console.error('❌ Session error:', sessionError);
+          setAuthError("Session error: " + sessionError.message);
+          setAuthLoading(false);
+          return;
+        }
+        
         if (session?.user) {
+          console.log('✅ Session found:', session.user.id);
+          console.log('📡 Fetching profile...');
+          
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!mounted) return; // Component unmounted
+          
+          if (profileError) {
+            console.error('❌ Profile error:', profileError);
+            setAuthError(`Profile error: ${profileError.message}`);
+            setState(prev => ({ ...prev, currentUser: null }));
+          } else {
+            console.log('✅ Profile loaded:', profile.name);
+            setState(prev => ({ ...prev, currentUser: profile }));
+            setAuthError(null);
+          }
+        } else {
+          console.log('ℹ️ No session found');
+        }
+      } catch (error) {
+        console.error('💥 Init error:', error);
+      } finally {
+        if (mounted) {
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    // Initialize immediately
+    initializeAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth event:', event);
+      
+      if (!mounted) return;
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
+        setState(prev => ({ ...prev, currentUser: null }));
+        setAuthLoading(false);
+        return;
+      }
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          console.log('👤 User authenticated:', session.user.id);
+          
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
 
+          if (!mounted) return;
+          
           if (error) {
-            setAuthError("Profile not found. Contact Admin.");
+            console.error('❌ Profile error:', error);
+            setAuthError(`Profile error: ${error.message}`);
             setState(prev => ({ ...prev, currentUser: null }));
-            setAuthLoading(false);
           } else {
+            console.log('✅ Profile set:', profile.name);
             setState(prev => ({ ...prev, currentUser: profile }));
-            setAuthLoading(false);
+            setAuthError(null);
           }
-        } else {
-          setState(prev => ({ ...prev, currentUser: null }));
-          setAuthLoading(false);
         }
-      } catch (error) {
-        console.error("Auth state change error:", error);
         setAuthLoading(false);
       }
-    }
-  );
+    });
 
-  return () => subscription.subscription.unsubscribe();
-}, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // --- 1. Real-time Data Fetching ---
   useEffect(() => {
