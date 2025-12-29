@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Environment
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -24,17 +24,17 @@ jobs:
         run: |
           echo "### 📂 Project Tree" > REPORTS_TREE.md
           echo '```text' >> REPORTS_TREE.md
-          # -a shows hidden files, . ensures local path, -I ignores noise
-          tree . -a -I 'node_modules|.git|dist|build|REPORTS_*|RECENT_CHANGES*' >> REPORTS_TREE.md
+          # Uses . to show relative path, ignores node_modules and existing reports
+          tree . -a -I 'node_modules|.git|dist|build|REPORTS_*' >> REPORTS_TREE.md
           echo '```' >> REPORTS_TREE.md
 
-      - name: "Step 2 & 3: Logic Map & Security Scanner"
+      - name: "Steps 2 & 3: File-Wise Logic Map & Security"
         shell: python
         run: |
           import os, re
           from collections import defaultdict
 
-          logic_by_file = defaultdict(list)
+          logic_by_file = defaultdict(lambda: {"purpose": "General Component/Utility", "functions": []})
           security_issues = []
           
           # Regex for logic and security
@@ -42,29 +42,40 @@ jobs:
           token_regex = re.compile(r'shpat_[a-zA-Z0-9]{32}')
 
           for root, dirs, files in os.walk("."):
-              # Ignore system/dependency folders
               if any(d in root for d in ['node_modules', '.git', 'dist']): continue
               for file in files:
                   if file.endswith(('.ts', '.tsx', '.js')):
                       path = os.path.join(root, file)
                       with open(path, 'r', errors='ignore') as f:
+                          content = f.read()
+                          f.seek(0)
+                          
+                          # Heuristic for "Purpose"
+                          if "login" in content.lower() or "auth" in content.lower():
+                              logic_by_file[file]["purpose"] = "Handles user authentication and security flows."
+                          elif "dashboard" in content.lower():
+                              logic_by_file[file]["purpose"] = "Main administrative interface for managing data and items."
+                          elif "api" in content.lower() or "fetch" in content.lower():
+                              logic_by_file[file]["purpose"] = "Manages data fetching and external API communications."
+                          elif "karigar" in content.lower() or "batch" in content.lower():
+                              logic_by_file[file]["purpose"] = "Production logic for garment manufacturing and assignment."
+
                           for i, line in enumerate(f, 1):
-                              # Logic detection
                               match = logic_regex.search(line)
                               if match:
-                                  name = match.group(2) or match.group(3) or "Anonymous/Route"
-                                  logic_by_file[file].append(f"Line {i}: `{name}`")
-                              
-                              # Security detection
+                                  name = match.group(2) or match.group(3) or "Route"
+                                  logic_by_file[file]["functions"].append(name)
                               if token_regex.search(line):
                                   security_issues.append(f"| `{file}` | Line {i} | Hardcoded Token | ❌ Critical |")
 
           # Write Grouped Logic Map
           with open("REPORTS_LOGIC_MAP.md", "w") as f:
-              f.write("### 🧠 Detailed Code Map (File-Wise)\n")
-              for file, functions in logic_by_file.items():
+              f.write("### 🧠 Detailed Code Map (File-Wise Summary)\n")
+              for file, data in logic_by_file.items():
                   f.write(f"\n#### 📄 {file}\n")
-                  f.write("> " + ", ".join(functions) + "\n")
+                  f.write(f"**Purpose:** {data['purpose']}\n\n")
+                  f.write("**Key Logic/Functions:**\n")
+                  f.write("> " + ", ".join(set(data['functions'])) + "\n")
 
           # Write Security Report
           with open("REPORTS_SECURITY.md", "w") as f:
@@ -75,9 +86,8 @@ jobs:
         run: |
           git config --local user.email "bot@stichflow.io"
           git config --local user.name "stichflow-master-bot"
-          # We only add the 3 reports you want to keep
           git add REPORTS_TREE.md REPORTS_LOGIC_MAP.md REPORTS_SECURITY.md
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "docs: sync project reports [skip ci]"
+            git commit -m "docs: generate descriptive reports [skip ci]"
             git push
           fi
