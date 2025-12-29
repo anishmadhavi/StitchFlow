@@ -95,17 +95,19 @@ const handleSignUp = async (name: string, email: string, secret: string) => {
     email,
     password: secret,
     options: {
-      // This metadata is crucial for the database to know who you are
       data: { 
         name: name,
-        role: 'ADMIN', 
-        mobile: '' // Optional, or capture from form
+        role: 'ADMIN', // Explicitly setting the role for the database trigger
+        mobile: '' 
       }
     }
   });
 
-  if (error) setAuthError(error.message);
-  else alert("Admin account created! Please log in.");
+  if (error) {
+    setAuthError(error.message);
+  } else {
+    alert("Admin account created! You can now log in.");
+  }
   setAuthLoading(false);
 };
 
