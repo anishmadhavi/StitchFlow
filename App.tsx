@@ -95,10 +95,10 @@ const handleSignUp = async (name: string, email: string, secret: string) => {
     email,
     password: secret,
     options: {
+      // The SQL Trigger looks EXACTLY for these keys: 'name' and 'role'
       data: { 
         name: name,
-        role: 'ADMIN', // Explicitly setting the role for the database trigger
-        mobile: '' 
+        role: 'ADMIN', // Hardcoded as ADMIN for this signup route
       }
     }
   });
@@ -106,7 +106,7 @@ const handleSignUp = async (name: string, email: string, secret: string) => {
   if (error) {
     setAuthError(error.message);
   } else {
-    alert("Admin account created! You can now log in.");
+    alert("Admin account created! Please log in.");
   }
   setAuthLoading(false);
 };
