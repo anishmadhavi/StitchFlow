@@ -46,13 +46,13 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   // --- Caching / Memoization for Passbook ---
   // This ensures we don't re-calculate or re-sort the ledger array unless the ledger data actually changes.
   // This simulates the "cache" behavior requested, providing immediate updates when currentUser.ledger changes (e.g., after payment).
-  const passbookEntries = useMemo(() => {
-      return currentUser.ledger.slice().reverse();
-  }, [currentUser.ledger]);
+const passbookEntries = useMemo(() => {
+  return (currentUser.ledger ?? []).slice().reverse();
+}, [currentUser.ledger]);
 
   const calculateTotalQty = (qty: SizeQty) => Object.values(qty).reduce((sum, val) => sum + val, 0);
 
-  const isAdvance = currentUser.walletBalance < 0;
+const isAdvance = (currentUser.walletBalance ?? 0) < 0;
 
   // --- Profile Photo Handler ---
 const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +118,7 @@ const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
             <div>
               <p className="text-red-500 mb-1 font-bold uppercase tracking-wide">Advance Taken</p>
               <h1 className="text-4xl font-bold tracking-tight text-red-600">
-                - ₹{Math.abs(currentUser.walletBalance).toLocaleString()}
+                - ₹{Math.abs(currentUser.walletBalance ?? 0).toLocaleString()}
               </h1>
             </div>
             <AlertOctagon className="w-16 h-16 text-red-100" />
@@ -130,7 +130,9 @@ const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-orange-100 mb-1 font-medium">Available Balance</p>
-              <h1 className="text-4xl font-bold tracking-tight">₹{currentUser.walletBalance.toLocaleString()}</h1>
+              <h1 className="text-4xl font-bold tracking-tight">
+  ₹{(currentUser.walletBalance ?? 0).toLocaleString()}
+</h1>
             </div>
             <BookOpen className="w-16 h-16 text-orange-200 opacity-50" />
           </div>
