@@ -6,7 +6,6 @@
  */
 
 import React, { useState } from 'react';
-import { supabase } from '../src/supabaseClient';
 import { Lock, User, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from './Shared';
 
