@@ -14,11 +14,6 @@
 │   ├── MasterDashboard.tsx
 │   ├── QCDashboard.tsx
 │   ├── Shared.tsx
-│   ├── admin
-│   │   ├── BatchesTab.tsx
-│   │   ├── CreateUserModal.tsx
-│   │   ├── PaymentsTab.tsx
-│   │   └── StaffTab.tsx
 │   └── shared
 │       ├── AssignToKarigarModal.tsx
 │       ├── CreateBatchModal.tsx
@@ -42,5 +37,5 @@
 ├── types.ts
 └── vite.config.ts
 
-9 directories, 32 files
+8 directories, 28 files
 ```
