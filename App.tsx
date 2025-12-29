@@ -17,12 +17,6 @@ import { LayoutDashboard, LogOut } from 'lucide-react';
 import { SIZE_OPTIONS } from './constants';
 
 export default function App() {
-    // 🔥 ONE-TIME CLEANUP OF OLD SUPABASE AUTH KEYS
-  useEffect(() => {
-    Object.keys(localStorage)
-      .filter(key => key.startsWith('sb-'))
-      .forEach(key => localStorage.removeItem(key));
-  }, []);
   const [state, setState] = useState<AppState>({
     currentUser: null,
     users: [],
@@ -34,14 +28,43 @@ export default function App() {
 
   // 🔐 Restore session on page reload
 useEffect(() => {
-  // Start loading immediately on page refresh
-  setAuthLoading(true);
+  // Check for existing session first
+  const initializeAuth = async () => {
+    setAuthLoading(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
+        if (error) {
+          setAuthError("Profile not found. Contact Admin.");
+          setState(prev => ({ ...prev, currentUser: null }));
+        } else {
+          setState(prev => ({ ...prev, currentUser: profile }));
+        }
+      }
+    } catch (error) {
+      console.error("Session initialization error:", error);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  initializeAuth();
+
+  // Then set up the listener for future auth changes
   const { data: subscription } = supabase.auth.onAuthStateChange(
     async (event, session) => {
+      console.log("Auth state changed:", event);
+      
       try {
         if (session?.user) {
-          // Fetch profile if session exists
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
@@ -51,15 +74,17 @@ useEffect(() => {
           if (error) {
             setAuthError("Profile not found. Contact Admin.");
             setState(prev => ({ ...prev, currentUser: null }));
+            setAuthLoading(false);
           } else {
             setState(prev => ({ ...prev, currentUser: profile }));
+            setAuthLoading(false);
           }
         } else {
-          // Clear user if logged out
           setState(prev => ({ ...prev, currentUser: null }));
+          setAuthLoading(false);
         }
-      } finally {
-        // Stop the loading spinner only after we know the profile status
+      } catch (error) {
+        console.error("Auth state change error:", error);
         setAuthLoading(false);
       }
     }
@@ -117,10 +142,10 @@ const handleLogin = async (identifier: string, secret: string) => {
 
     if (error) {
       setAuthError(error.message);
-      setAuthLoading(false); // Only stop loading if there is an error
+      setAuthLoading(false);
     }
-    // We REMOVE the manual profile fetch here. 
-    // The useEffect listener below will handle it automatically.
+    // Don't stop loading here - the onAuthStateChange listener will handle it
+    // and set the profile, which will stop the loading spinner
   };
 
 const handleSignUp = async (name: string, email: string, secret: string) => {
