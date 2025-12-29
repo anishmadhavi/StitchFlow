@@ -7,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 auth: {
   persistSession: true,
   autoRefreshToken: true,
-  detectSessionInUrl: true,
-  storageKey: 'stitchflow-v1',
+  detectSessionInUrl: false, // ❗ CRITICAL FIX
+  storageKey: 'stitchflow-v2', // bump version ONCE
   storage: window.localStorage,
 },
