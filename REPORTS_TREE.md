@@ -23,6 +23,7 @@
 ├── metadata.json
 ├── package.json
 ├── services
+│   ├── assignmentService.ts
 │   ├── batchService.ts
 │   └── userService.ts
 ├── src
@@ -31,5 +32,5 @@
 ├── types.ts
 └── vite.config.ts
 
-7 directories, 23 files
+7 directories, 24 files
 ```

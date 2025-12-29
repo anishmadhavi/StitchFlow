@@ -24,6 +24,12 @@
 **Key Logic/Functions:**
 > 
 
+#### 📄 assignmentService.ts
+**Purpose:** Production logic for garment manufacturing and assignment.
+
+**Key Logic/Functions:**
+> 
+
 #### 📄 Login.tsx
 **Purpose:** Handles user authentication and security flows.
 
@@ -34,31 +40,31 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleShopifySync, totalAvailable, handleAssignSubmit, openAssignModal, handleQCSubmit, openInspectModal, handleCutSubmit, openCutModal, handleImageUpload, handleSubmitBatch, handleQCQtyChange
+> handleImageUpload, openInspectModal, handleCutSubmit, handleQCSubmit, handleShopifySync, handleQCQtyChange, totalAvailable, openAssignModal, openCutModal, handleSubmitBatch, handleAssignSubmit
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleShopifySync, handleAssignSubmit, openAssignModal, handleAddUser, openBatchDetails, openPassbook, handleImageUpload, handleSubmitBatch, getActiveAssignments, submitPayment
+> handleImageUpload, openPassbook, handleShopifySync, getActiveAssignments, openBatchDetails, openAssignModal, handleSubmitBatch, handleAddUser, submitPayment, handleAssignSubmit
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> totalAvailable, handleAssignSubmit, openAssignModal, handleSelectKarigar, handleCutSubmit, openCutModal
+> handleSelectKarigar, handleCutSubmit, totalAvailable, openAssignModal, openCutModal, handleAssignSubmit
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handlePhotoUpload, calculateTotalQty, isAdvance
+> handlePhotoUpload, isAdvance, calculateTotalQty
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> totalPassed, formatDate, openInspectModal, handleSubmit, handleQtyChange
+> openInspectModal, handleSubmit, totalPassed, handleQtyChange, formatDate
 
 #### 📄 useData.ts
 **Purpose:** Manages data fetching and external API communications.
@@ -70,7 +76,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> loadProfile, handleLogin, initializeAuth, handleLogout, handleSignUp, useAuth
+> loadProfile, useAuth, handleLogout, handleSignUp, handleLogin, initializeAuth
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
