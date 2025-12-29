@@ -5,11 +5,9 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true, // Set to true to help Supabase recover sessions
-    storageKey: 'stitchflow-v1', // 🆕 Change the name slightly (e.g., add -v1) 
-                                 // to force the browser to start fresh
-    storage: window.localStorage,
-  },
-});
+  persistSession: true,
+  autoRefreshToken: true,
+  detectSessionInUrl: true,
+  storageKey: 'stitchflow-v1',
+  storage: window.localStorage,
+},
