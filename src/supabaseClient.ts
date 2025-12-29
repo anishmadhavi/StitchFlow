@@ -1,6 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://sdrvifpydrlykhbnvtxi.supabase.co'; // Get this from Supabase Project Settings > API
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkcnZpZnB5ZHJseWtoYm52dHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NTE3MjIsImV4cCI6MjA4MjQyNzcyMn0.7ADcYdm1NzJBeOgoKRAbh7q86upbM_54UXWGMDoGpHY'; 
+const supabaseUrl = 'https://sdrvifpydrlykhbnvtxi.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkcnZpZnB5ZHJseWtoYm52dHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4NTE3MjIsImV4cCI6MjA4MjQyNzcyMn0.7ADcYdm1NzJBeOgoKRAbh7q86upbM_54UXWGMDoGpHY';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+    storageKey: 'stitchflow-auth', // 🔑 CRITICAL FIX
+  },
+});
