@@ -16,7 +16,8 @@
 │   └── Shared.tsx
 ├── constants.ts
 ├── hooks
-│   └── useAuth.ts
+│   ├── useAuth.ts
+│   └── useData.ts
 ├── index.html
 ├── index.tsx
 ├── metadata.json
@@ -27,5 +28,5 @@
 ├── types.ts
 └── vite.config.ts
 
-6 directories, 20 files
+6 directories, 21 files
 ```
