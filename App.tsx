@@ -30,33 +30,34 @@ export default function App() {
 useEffect(() => {
   const { data: subscription } = supabase.auth.onAuthStateChange(
     async (_event, session) => {
-      // ⛔ Logged out
-      if (!session?.user) {
-        setState(prev => ({ ...prev, currentUser: null }));
-        setAuthLoading(false);
-        return;
-      }
+      try {
+        // ⛔ Logged out
+        if (!session?.user) {
+          setState(prev => ({ ...prev, currentUser: null }));
+          return;
+        }
 
-      // ✅ Logged in / restored
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+        // ✅ Logged in / restored
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
-      if (profile) {
+        if (error) {
+          console.error("Profile fetch failed:", error);
+          setAuthError("Unable to load user profile");
+          return;
+        }
+
         setState(prev => ({ ...prev, currentUser: profile }));
-      }
 
-      // 🔓 IMPORTANT: stop login spinner
-      setAuthLoading(false);
+      } finally {
+        // ✅ ALWAYS stop spinner (success or failure)
+        setAuthLoading(false);
+      }
     }
   );
-
-  // Initial restore trigger
-  supabase.auth.getSession().then(() => {
-    setAuthLoading(false);
-  });
 
   return () => {
     subscription.subscription.unsubscribe();
