@@ -85,12 +85,38 @@ const handleCutSubmit = async (e: React.FormEvent) => {
     setAssignStep(1); // Move to quantity entry
   };
 
-  const handleAssignSubmit = (e: React.FormEvent) => {
+const handleAssignSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (assignModal.batchId && assignForm.karigarId) {
-      onAssignToKarigar(assignModal.batchId, assignForm.karigarId, assignForm.qty);
-    }
-    setAssignModal({ open: false, batchId: null });
+    if (!assignModal.batchId || !assignForm.karigarId || !selectedBatchForAssign) return;
+
+    // 1. Calculate new available quantities for the batch
+    const newAvailable = { ...selectedBatchForAssign.availableQty };
+    Object.entries(assignForm.qty).forEach(([size, amount]) => {
+      newAvailable[size] = (newAvailable[size] || 0) - amount;
+    });
+
+    // 2. Create the assignment record
+    const { error: assignError } = await supabase
+      .from('assignments')
+      .insert([{
+        batch_id: assignModal.batchId,
+        karigar_id: assignForm.karigarId,
+        karigar_name: selectedKarigar?.name,
+        assigned_qty: assignForm.qty,
+        status: 'Assigned'
+      }]);
+
+    // 3. Update the batch status and available stock
+    const { error: batchError } = await supabase
+      .from('batches')
+      .update({ 
+        available_qty: newAvailable,
+        status: 'In Production' 
+      })
+      .eq('id', assignModal.batchId);
+
+    if (assignError || batchError) alert("Error during assignment");
+    else setAssignModal({ open: false, batchId: null });
   };
 
   const selectedBatchForAssign = batches.find(b => b.id === assignModal.batchId);
