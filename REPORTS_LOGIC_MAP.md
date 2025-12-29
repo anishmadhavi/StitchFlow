@@ -18,7 +18,7 @@
 | `App.tsx` | Line 253 | `const rework = (total as number) - passed;` |
 | `App.tsx` | Line 351 | `const handleTransaction = (userId: string, amount: number, r` |
 | `App.tsx` | Line 381 | `const handleArchive = (batchId: string) => {` |
-| `Login.tsx` | Line 28 | `const handleSubmit = (e: React.FormEvent) => {` |
+| `Login.tsx` | Line 27 | `const handleSubmit = (e: React.FormEvent) => {` |
 | `ManagerDashboard.tsx` | Line 69 | `const handleShopifySync = () => {` |
 | `ManagerDashboard.tsx` | Line 85 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
 | `ManagerDashboard.tsx` | Line 116 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
