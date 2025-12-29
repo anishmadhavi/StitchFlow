@@ -115,17 +115,30 @@ export default function App() {
 
   // --- 3. User & Staff Management ---
 
-  const addUser = async (name: string, role: Role, mobile: string, pin: string) => {
-    // Calls the "Add-User" Edge Function
+const addUser = async (name: string, role: Role, mobile: string, pin: string) => {
+    // 1. Log the attempt locally for tracking
+    console.log("Invoking Add-User for:", name);
+
     const { data, error } = await supabase.functions.invoke('Add-User', {
       body: { name, role, mobile, pin }
     });
 
+    // 2. Check for connection errors (e.g., wrong function name)
     if (error) {
-      alert("Error adding staff: " + error.message);
-    } else {
-      alert("Staff member created successfully!");
+      console.error("Connection Error:", error);
+      alert("Network error: " + error.message);
+      return;
     }
+
+    // 3. Check for database errors returned INSIDE the function response
+    if (data?.error) {
+      console.error("Database Error from Function:", data.error);
+      alert("Database Error: " + data.error);
+      return;
+    }
+
+    console.log("Success:", data);
+    alert("Staff member created successfully!");
   };
 
   const updateUser = async (userId: string, updates: Partial<User>) => {
