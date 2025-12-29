@@ -15,6 +15,8 @@
 │   ├── QCDashboard.tsx
 │   └── Shared.tsx
 ├── constants.ts
+├── hooks
+│   └── useAuth.ts
 ├── index.html
 ├── index.tsx
 ├── metadata.json
@@ -25,5 +27,5 @@
 ├── types.ts
 └── vite.config.ts
 
-5 directories, 19 files
+6 directories, 20 files
 ```

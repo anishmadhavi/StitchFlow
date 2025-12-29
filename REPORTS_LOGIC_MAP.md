@@ -28,31 +28,37 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleCutSubmit, handleQCSubmit, totalAvailable, handleImageUpload, openAssignModal, handleAssignSubmit, openInspectModal, openCutModal, handleQCQtyChange, handleSubmitBatch, handleShopifySync
+> handleQCQtyChange, handleAssignSubmit, handleSubmitBatch, openAssignModal, handleCutSubmit, handleShopifySync, totalAvailable, openCutModal, handleImageUpload, handleQCSubmit, openInspectModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleAddUser, handleImageUpload, openBatchDetails, openPassbook, submitPayment, openAssignModal, getActiveAssignments, handleAssignSubmit, handleSubmitBatch, handleShopifySync
+> handleAddUser, openBatchDetails, handleAssignSubmit, handleSubmitBatch, openAssignModal, handleShopifySync, submitPayment, openPassbook, getActiveAssignments, handleImageUpload
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleCutSubmit, handleSelectKarigar, openAssignModal, handleAssignSubmit, openCutModal, totalAvailable
+> handleSelectKarigar, handleAssignSubmit, openAssignModal, handleCutSubmit, totalAvailable, openCutModal
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> isAdvance, calculateTotalQty, handlePhotoUpload
+> handlePhotoUpload, isAdvance, calculateTotalQty
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleSubmit, formatDate, openInspectModal, totalPassed, handleQtyChange
+> handleQtyChange, handleSubmit, totalPassed, formatDate, openInspectModal
+
+#### 📄 useAuth.ts
+**Purpose:** Handles user authentication and security flows.
+
+**Key Logic/Functions:**
+> useAuth, handleSignUp, handleLogout, initializeAuth, handleLogin, loadProfile
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
