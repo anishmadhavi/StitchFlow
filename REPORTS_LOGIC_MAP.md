@@ -22,14 +22,14 @@
 | `ManagerDashboard.tsx` | Line 249 | `const totalAvailable = (Object.values(batch.availableQty) as` |
 | `AdminDashboard.tsx` | Line 79 | `const getActiveAssignments = (userId: string) => {` |
 | `AdminDashboard.tsx` | Line 87 | `const handleShopifySync = () => {` |
-| `AdminDashboard.tsx` | Line 103 | `const handleImageUpload = (e: React.ChangeEvent<HTMLInputEle` |
-| `AdminDashboard.tsx` | Line 114 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 128 | `const openBatchDetails = (batch: Batch) => {` |
-| `AdminDashboard.tsx` | Line 133 | `const openAssignModal = () => {` |
-| `AdminDashboard.tsx` | Line 141 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 150 | `const handleAddUser = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 157 | `const openPassbook = (userId: string) => {` |
-| `AdminDashboard.tsx` | Line 162 | `const submitPayment = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 103 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
+| `AdminDashboard.tsx` | Line 134 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 148 | `const openBatchDetails = (batch: Batch) => {` |
+| `AdminDashboard.tsx` | Line 153 | `const openAssignModal = () => {` |
+| `AdminDashboard.tsx` | Line 161 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 170 | `const handleAddUser = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 177 | `const openPassbook = (userId: string) => {` |
+| `AdminDashboard.tsx` | Line 182 | `const submitPayment = (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 49 | `const openCutModal = (batch: Batch) => {` |
 | `MasterDashboard.tsx` | Line 54 | `const handleCutSubmit = (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 60 | `const openAssignModal = (batch: Batch) => {` |
