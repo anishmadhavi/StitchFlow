@@ -6,7 +6,6 @@
  */
 
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
 import { Plus, Archive, RefreshCw, Trash2, UserPlus, BookOpen, Briefcase, Key, Phone, Settings, Upload, Eye, ArrowRight, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Batch, BatchStatus, Role, User, SizeQty, AssignmentStatus } from '../types';
 import { SIZE_OPTIONS } from '../constants';
@@ -102,35 +101,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
 const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  try {
-    // 1. Create a unique filename
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `design-images/${fileName}`;
 
-    // 2. Upload to the 'designs' bucket
+    // Upload physical file to Supabase Storage instead of base64
     const { error: uploadError } = await supabase.storage
       .from('designs')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      alert("Upload failed: " + uploadError.message);
+      return;
+    }
 
-    // 3. Get the Public URL
     const { data: { publicUrl } } = supabase.storage
       .from('designs')
       .getPublicUrl(filePath);
 
-    // 4. Update the form state with the real URL
+    // Update state with the permanent URL
     setNewBatchForm(prev => ({ ...prev, imageUrl: publicUrl }));
-    alert("Image uploaded successfully!");
-
-  } catch (error: any) {
-    alert("Error uploading image: " + error.message);
-  }
-};
+  };
 
   const handleSubmitBatch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,11 +162,21 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAddUser(newUserForm.name, newUserForm.role, newUserForm.mobile, newUserForm.pin);
-    setIsUserModalOpen(false);
-    setNewUserForm({ name: '', role: Role.KARIGAR, mobile: '', pin: '' });
+    
+    // Securely create Auth record + Profile using the Edge Function
+    const { error } = await supabase.functions.invoke('admin-create-user', {
+      body: newUserForm
+    });
+
+    if (error) {
+      alert("Error adding staff: " + error.message);
+    } else {
+      setIsUserModalOpen(false);
+      setNewUserForm({ name: '', role: Role.KARIGAR, mobile: '', pin: '' });
+      alert("Staff member created successfully!");
+    }
   };
 
   const openPassbook = (userId: string) => {
