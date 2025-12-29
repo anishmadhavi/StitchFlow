@@ -1,4 +1,4 @@
 ### 📦 App Size Report
 ```text
-636K	.
+640K	.
 ```
