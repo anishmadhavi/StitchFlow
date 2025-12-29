@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../src/supabaseClient';
 
 // --- Types ---
 interface BadgeProps {
