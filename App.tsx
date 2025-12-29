@@ -17,6 +17,12 @@ import { LayoutDashboard, LogOut } from 'lucide-react';
 import { SIZE_OPTIONS } from './constants';
 
 export default function App() {
+    // 🔥 ONE-TIME CLEANUP OF OLD SUPABASE AUTH KEYS
+  useEffect(() => {
+    Object.keys(localStorage)
+      .filter(key => key.startsWith('sb-'))
+      .forEach(key => localStorage.removeItem(key));
+  }, []);
   const [state, setState] = useState<AppState>({
     currentUser: null,
     users: [],
