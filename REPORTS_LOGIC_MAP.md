@@ -30,16 +30,16 @@
 | `ManagerDashboard.tsx` | Line 165 | `const handleQCSubmit = (e: React.FormEvent) => {` |
 | `ManagerDashboard.tsx` | Line 173 | `const handleQCQtyChange = (size: string, val: number) => {` |
 | `ManagerDashboard.tsx` | Line 270 | `const totalAvailable = (Object.values(batch.availableQty) as` |
-| `AdminDashboard.tsx` | Line 80 | `const getActiveAssignments = (userId: string) => {` |
-| `AdminDashboard.tsx` | Line 88 | `const handleShopifySync = () => {` |
-| `AdminDashboard.tsx` | Line 104 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
-| `AdminDashboard.tsx` | Line 135 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 149 | `const openBatchDetails = (batch: Batch) => {` |
-| `AdminDashboard.tsx` | Line 154 | `const openAssignModal = () => {` |
-| `AdminDashboard.tsx` | Line 162 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 171 | `const handleAddUser = (e: React.FormEvent) => {` |
-| `AdminDashboard.tsx` | Line 178 | `const openPassbook = (userId: string) => {` |
-| `AdminDashboard.tsx` | Line 183 | `const submitPayment = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 79 | `const getActiveAssignments = (userId: string) => {` |
+| `AdminDashboard.tsx` | Line 87 | `const handleShopifySync = () => {` |
+| `AdminDashboard.tsx` | Line 103 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
+| `AdminDashboard.tsx` | Line 129 | `const handleSubmitBatch = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 143 | `const openBatchDetails = (batch: Batch) => {` |
+| `AdminDashboard.tsx` | Line 148 | `const openAssignModal = () => {` |
+| `AdminDashboard.tsx` | Line 156 | `const handleAssignSubmit = (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 165 | `const handleAddUser = async (e: React.FormEvent) => {` |
+| `AdminDashboard.tsx` | Line 182 | `const openPassbook = (userId: string) => {` |
+| `AdminDashboard.tsx` | Line 187 | `const submitPayment = (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 49 | `const openCutModal = (batch: Batch) => {` |
 | `MasterDashboard.tsx` | Line 54 | `const handleCutSubmit = (e: React.FormEvent) => {` |
 | `MasterDashboard.tsx` | Line 60 | `const openAssignModal = (batch: Batch) => {` |
