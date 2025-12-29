@@ -22,6 +22,10 @@
 │   │   ├── PaymentsTab.tsx
 │   │   ├── SettingsTab.tsx
 │   │   └── StaffTab.tsx
+│   ├── manager
+│   │   ├── AllocationTab.tsx
+│   │   ├── ProductionTab.tsx
+│   │   └── QCTab.tsx
 │   └── shared
 │       ├── AssignToKarigarModal.tsx
 │       ├── CreateBatchModal.tsx
@@ -45,5 +49,5 @@
 ├── types.ts
 └── vite.config.ts
 
-9 directories, 35 files
+10 directories, 38 files
 ```
