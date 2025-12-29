@@ -52,10 +52,22 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
     setCutModal({ open: true, batchId: batch.id });
   };
 
-  const handleCutSubmit = (e: React.FormEvent) => {
+const handleCutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (cutModal.batchId) onFinalizeCut(cutModal.batchId, cutForm);
-    setCutModal({ open: false, batchId: null });
+    if (!cutModal.batchId) return;
+
+    // Update the batch in Supabase: Set status and actual cut quantities
+    const { error } = await supabase
+      .from('batches')
+      .update({
+        status: 'Cutting Done',
+        actual_cut_qty: cutForm,
+        available_qty: cutForm // When cut is done, all pieces are available for assignment
+      })
+      .eq('id', cutModal.batchId);
+
+    if (error) alert("Error saving cut: " + error.message);
+    else setCutModal({ open: false, batchId: null });
   };
 
   const openAssignModal = (batch: Batch) => {
