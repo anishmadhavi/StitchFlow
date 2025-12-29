@@ -37,12 +37,38 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ batches, onSubmitQC })
     setInspectModal({ open: true, batchId: item.batch.id, assignmentId: item.id });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inspectModal.batchId && inspectModal.assignmentId) {
-      onSubmitQC(inspectModal.batchId, inspectModal.assignmentId, qcForm);
-    }
-    setInspectModal({ open: false, batchId: null, assignmentId: null });
+    if (!inspectModal.assignmentId || !currentInspectItem) return;
+
+    const totalPassedCount = Object.values(qcForm).reduce((a, b) => a + b, 0);
+    const payoutAmount = totalPassedCount * currentInspectItem.batch.rate_per_piece;
+
+    // 1. Update assignment status to QC Passed
+    const { error: assignError } = await supabase
+      .from('assignments')
+      .update({ status: 'QC Passed' })
+      .eq('id', inspectModal.assignmentId);
+
+    // 2. Add entry to Ledger (Financial record)
+    const { error: ledgerError } = await supabase
+      .from('ledger_entries')
+      .insert([{
+        user_id: currentInspectItem.karigar_id,
+        description: `QC Passed: ${currentInspectItem.batch.style_name} (${totalPassedCount} pcs)`,
+        amount: payoutAmount,
+        type: 'CREDIT',
+        related_batch_id: currentInspectItem.batch_id
+      }]);
+
+    // 3. Update Karigar's Wallet Balance
+    const { error: walletError } = await supabase.rpc('increment_wallet', { 
+      user_id: currentInspectItem.karigar_id, 
+      amount: payoutAmount 
+    });
+
+    if (assignError || ledgerError) alert("Error processing QC result");
+    else setInspectModal({ open: false, batchId: null, assignmentId: null });
   };
 
   const handleQtyChange = (size: string, val: number) => {
