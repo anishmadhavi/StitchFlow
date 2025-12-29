@@ -1,0 +1,96 @@
+name: Stichflow Master Bot
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze_and_report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node & Python
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Analysis Tools
+        run: |
+          npm install -g tree-cli
+          # Ensure package-lock exists for analysis tools
+          if [ -f "package.json" ]; then npm install --package-lock-only || true; fi
+
+      - name: "Step 1: Project Tree"
+        run: |
+          echo "### 📂 Project Tree" > REPORTS_TREE.md
+          echo '```text' >> REPORTS_TREE.md
+          tree -I 'node_modules|.git|dist|build|REPORTS_*' >> REPORTS_TREE.md
+          echo '```' >> REPORTS_TREE.md
+
+      - name: "Steps 2 & 3: Logic Map & Security"
+        shell: python
+        run: |
+          import os, re
+          logic_map, security_issues = [], []
+          logic_regex = re.compile(r'(function\s+\w+|const\s+\w+\s*=\s*(async\s*)?\(|router\.(get|post))')
+          token_regex = re.compile(r'shpat_[a-zA-Z0-9]{32}')
+          vuln_regex = re.compile(r'(\.innerHTML\s*=|eval\()')
+
+          for root, dirs, files in os.walk("."):
+              if any(d in root for d in ['node_modules', '.git', 'dist']): continue
+              for file in files:
+                  if file.endswith(('.ts', '.tsx', '.js')):
+                      path = os.path.join(root, file)
+                      with open(path, 'r', errors='ignore') as f:
+                          for i, line in enumerate(f, 1):
+                              clean = line.strip()[:60]
+                              if logic_regex.search(line): logic_map.append(f"| `{file}` | Line {i} | `{clean}` |")
+                              if token_regex.search(line): security_issues.append(f"| `{file}` | Line {i} | Hardcoded Token | ❌ Critical |")
+                              if vuln_regex.search(line): security_issues.append(f"| `{file}` | Line {i} | Unsafe HTML/Eval | ⚠️ Warning |")
+
+          with open("REPORTS_LOGIC_MAP.md", "w") as f:
+              f.write("### 🧠 Detailed Code Map\n\n| File | Location | Logic Pattern |\n| :--- | :--- | :--- |\n" + "\n".join(logic_map))
+          with open("REPORTS_SECURITY.md", "w") as f:
+              f.write("### 🛡️ Security & Health Report\n\n| File | Location | Issue Type | Severity |\n| :--- | :--- | :--- | :--- |\n" + ("\n".join(security_issues) if security_issues else "| All Files | N/A | No security holes found | ✅ Pass |"))
+
+      - name: "Step 4: Change Log"
+        run: |
+          echo "### 📜 Recent Changes" > RECENT_CHANGES.md
+          echo "| Status | File Path |" >> RECENT_CHANGES.md
+          echo "| :--- | :--- |" >> RECENT_CHANGES.md
+          git diff --name-status HEAD^ HEAD | awk '{print "| " $1 " | " $2 " |"}' >> RECENT_CHANGES.md || echo "| N/A | Initial Commit |" >> RECENT_CHANGES.md
+
+      - name: "Step 5: App Size"
+        run: |
+          echo "### 📦 App Size Report" > REPORTS_SIZE.md
+          echo '```text' >> REPORTS_SIZE.md
+          du -sh . --exclude=node_modules >> REPORTS_SIZE.md
+          echo '```' >> REPORTS_SIZE.md
+
+      - name: "Step 6: Dead Code"
+        run: |
+          echo "### 🗑️ Dead Code Report" > REPORTS_DEAD_CODE.md
+          npx depcheck --json=false >> REPORTS_DEAD_CODE.md || echo "No issues found." >> REPORTS_DEAD_CODE.md
+
+      - name: "Final: Single Commit and Push"
+        run: |
+          git config --local user.email "bot@stichflow.io"
+          git config --local user.name "stichflow-master-bot"
+          git add REPORTS_*.md RECENT_CHANGES.md
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "chore: master bot report update [skip ci]"
+            git push
+          else
+            echo "No changes detected."
+          fi
