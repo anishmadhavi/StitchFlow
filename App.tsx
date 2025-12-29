@@ -106,11 +106,19 @@ export default function App() {
         console.log('📡 Fetching profile for event:', event);
         
         try {
-          const { data: profile, error } = await supabase
+        try {
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+          );
+          
+          const fetchPromise = supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single();
+
+          const { data: profile, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
           if (!mounted) return;
           
@@ -125,8 +133,9 @@ export default function App() {
           }
         } catch (error) {
           console.error('💥 Profile fetch exception:', error);
-          setAuthError('Failed to load profile');
+          setAuthError('Failed to load profile: ' + error.message);
         } finally {
+          console.log('⏹️ Setting authLoading to false');
           setAuthLoading(false);
         }
       } else if (event === 'INITIAL_SESSION' && !session) {
