@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import { AppState, Role, Batch, SizeQty, User, AssignmentStatus, BatchStatus, LedgerEntry, Assignment } from './types';
 import { AdminDashboard } from './components/AdminDashboard';
 import { MasterDashboard } from './components/MasterDashboard';
