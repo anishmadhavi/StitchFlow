@@ -2,22 +2,21 @@
 
 | File | Location | Logic Pattern |
 | :--- | :--- | :--- |
-| `App.tsx` | Line 20 | `export default function App() {` |
-| `App.tsx` | Line 34 | `// const fetchData = async () => {` |
-| `App.tsx` | Line 43 | `const handleLogin = async (identifier: string, secret: strin` |
-| `App.tsx` | Line 69 | `const handleSignUp = async (name: string, email: string, sec` |
-| `App.tsx` | Line 92 | `const handleLogout = () => {` |
-| `App.tsx` | Line 98 | `const addUser = (name: string, role: Role, mobile: string, p` |
-| `App.tsx` | Line 113 | `const updateUser = (userId: string, updates: Partial<User>) ` |
-| `App.tsx` | Line 126 | `const deleteUser = (userId: string) => {` |
-| `App.tsx` | Line 131 | `const createBatch = (batchData: Partial<Batch>) => {` |
-| `App.tsx` | Line 148 | `const finalizeCut = (batchId: string, actualQty: SizeQty) =>` |
-| `App.tsx` | Line 169 | `const assignToKarigar = (batchId: string, karigarId: string,` |
-| `App.tsx` | Line 209 | `const updateAssignmentStatus = (batchId: string, assignmentI` |
-| `App.tsx` | Line 237 | `const handleQCSubmit = (batchId: string, assignmentId: strin` |
-| `App.tsx` | Line 253 | `const rework = (total as number) - passed;` |
-| `App.tsx` | Line 351 | `const handleTransaction = (userId: string, amount: number, r` |
-| `App.tsx` | Line 381 | `const handleArchive = (batchId: string) => {` |
+| `App.tsx` | Line 19 | `export default function App() {` |
+| `App.tsx` | Line 34 | `const fetchData = async () => {` |
+| `App.tsx` | Line 65 | `const handleLogin = async (identifier: string, secret: strin` |
+| `App.tsx` | Line 92 | `const handleSignUp = async (name: string, email: string, sec` |
+| `App.tsx` | Line 111 | `const handleLogout = async () => {` |
+| `App.tsx` | Line 118 | `const addUser = async (name: string, role: Role, mobile: str` |
+| `App.tsx` | Line 131 | `const updateUser = async (userId: string, updates: Partial<U` |
+| `App.tsx` | Line 145 | `const deleteUser = async (userId: string) => {` |
+| `App.tsx` | Line 156 | `const createBatch = async (batchData: Partial<Batch>) => {` |
+| `App.tsx` | Line 172 | `const finalizeCut = async (batchId: string, actualQty: SizeQ` |
+| `App.tsx` | Line 185 | `const assignToKarigar = async (batchId: string, karigarId: s` |
+| `App.tsx` | Line 221 | `const updateAssignmentStatus = async (batchId: string, assig` |
+| `App.tsx` | Line 233 | `const handleQCSubmit = async (batchId: string, assignmentId:` |
+| `App.tsx` | Line 267 | `const handleTransaction = async (userId: string, amount: num` |
+| `App.tsx` | Line 287 | `const handleArchive = async (batchId: string) => {` |
 | `Login.tsx` | Line 27 | `const handleSubmit = (e: React.FormEvent) => {` |
 | `ManagerDashboard.tsx` | Line 69 | `const handleShopifySync = () => {` |
 | `ManagerDashboard.tsx` | Line 85 | `const handleImageUpload = async (e: React.ChangeEvent<HTMLIn` |
