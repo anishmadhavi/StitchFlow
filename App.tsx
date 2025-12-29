@@ -27,34 +27,15 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   // --- Data Fetching (Production Placeholder) ---
-useEffect(() => {
-    const fetchData = async () => {
-      // Fetch batches with their nested assignments
-      const { data: batches } = await supabase
-        .from('batches')
-        .select('*, assignments(*)')
-        .order('created_at', { ascending: false });
-      
-      // Fetch profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('*');
-
-      setState(prev => ({ 
-        ...prev, 
-        users: profiles || [], 
-        batches: batches || [] 
-      }));
-    };
-
-    fetchData();
-
-    // Set up real-time subscription to refresh UI on database changes
-    const channel = supabase.channel('db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public' }, fetchData)
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+  useEffect(() => {
+    // TODO: Connect to Supabase here to fetch real Users and Batches
+    // Example:
+    // const fetchData = async () => {
+    //    const { data: users } = await supabase.from('profiles').select('*');
+    //    const { data: batches } = await supabase.from('batches').select('*');
+    //    setState(prev => ({ ...prev, users: users || [], batches: batches || [] }));
+    // };
+    // fetchData();
   }, []);
 
   // --- Login Handler ---
@@ -62,7 +43,7 @@ const handleLogin = async (identifier: string, secret: string) => {
     setAuthLoading(true);
     setAuthError(null);
 
-    // If identifier doesn't have @, assume it's a mobile number for staff
+    // Bridge mobile-only UI with Supabase email-based Auth
     const email = identifier.includes('@') ? identifier : `${identifier}@stitchflow.app`;
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -73,7 +54,6 @@ const handleLogin = async (identifier: string, secret: string) => {
     if (error) {
       setAuthError(error.message);
     } else {
-      // Fetch the full profile after successful auth
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -81,36 +61,6 @@ const handleLogin = async (identifier: string, secret: string) => {
         .single();
       
       if (profile) setState(prev => ({ ...prev, currentUser: profile }));
-    }
-    setAuthLoading(false);
-  };
-
-    // MOCK LOGIN LOGIC (Replace with Supabase in Production)
-    // 1. Determine if it's email (Admin) or Mobile (Staff)
-    const isEmail = identifier.includes('@');
-    
-    // 2. Simulate Network Delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // 3. Find User in State (or DB)
-    let user: User | undefined;
-    
-    if (isEmail) {
-       // Check against loaded users for Admin role
-       user = state.users.find(u => u.role === Role.ADMIN && u.mobile === identifier); 
-    } else {
-       // Check mobile and pin for staff
-       user = state.users.find(u => {
-           const mobile = u.mobile || '';
-           const pin = u.displayPin || '';
-           return mobile === identifier && pin === secret;
-       });
-    }
-
-    if (user) {
-      setState(prev => ({ ...prev, currentUser: user! }));
-    } else {
-      setAuthError("Invalid credentials. Please check your inputs or Create an Admin Account.");
     }
     setAuthLoading(false);
   };
@@ -177,20 +127,21 @@ const handleLogin = async (identifier: string, secret: string) => {
     setState(prev => ({ ...prev, users: prev.users.filter(u => u.id !== userId) }));
   };
 
-const createBatch = async (batchData: Partial<Batch>) => {
-    const { error } = await supabase
-      .from('batches')
-      .insert([{
-        style_name: batchData.styleName,
-        sku: batchData.sku,
-        image_url: batchData.imageUrl,
-        rate_per_piece: batchData.ratePerPiece,
-        planned_qty: batchData.plannedQty,
-        available_qty: batchData.plannedQty, // Initially, all planned are available
-        status: 'Pending Material'
-      }]);
-
-    if (error) alert("Error creating batch: " + error.message);
+  const createBatch = (batchData: Partial<Batch>) => {
+    const newBatch: Batch = {
+      id: `b${Date.now()}`,
+      styleName: batchData.styleName!,
+      sku: batchData.sku!,
+      imageUrl: batchData.imageUrl!,
+      ratePerPiece: batchData.ratePerPiece!,
+      status: BatchStatus.PENDING_MATERIAL,
+      createdAt: new Date().toISOString(),
+      plannedQty: batchData.plannedQty!,
+      actualCutQty: {},
+      availableQty: {},
+      assignments: []
+    };
+    setState(prev => ({ ...prev, batches: [newBatch, ...prev.batches] }));
   };
 
   const finalizeCut = (batchId: string, actualQty: SizeQty) => {
