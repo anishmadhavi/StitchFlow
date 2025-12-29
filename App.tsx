@@ -89,24 +89,25 @@ export default function App() {
     setAuthLoading(false);
   };
 
-  const handleSignUp = async (name: string, email: string, secret: string) => {
-    setAuthLoading(true);
-    // Real Supabase Auth SignUp for Admin
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: secret,
-      options: {
-        data: { name, role: Role.ADMIN }
+const handleSignUp = async (name: string, email: string, secret: string) => {
+  setAuthLoading(true);
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: secret,
+    options: {
+      // This metadata is crucial for the database to know who you are
+      data: { 
+        name: name,
+        role: 'ADMIN', 
+        mobile: '' // Optional, or capture from form
       }
-    });
-
-    if (error) {
-      setAuthError(error.message);
-    } else {
-      alert("Admin account created! Please log in.");
     }
-    setAuthLoading(false);
-  };
+  });
+
+  if (error) setAuthError(error.message);
+  else alert("Admin account created! Please log in.");
+  setAuthLoading(false);
+};
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
