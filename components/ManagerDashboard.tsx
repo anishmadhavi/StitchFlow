@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../src/supabaseClient';
 import { Plus, Scissors, UserPlus, ClipboardCheck, LayoutGrid, RefreshCw, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import { Batch, BatchStatus, Role, User, SizeQty, AssignmentStatus } from '../types';
 import { SIZE_OPTIONS } from '../constants';
