@@ -12,53 +12,36 @@ export const userService = {
   // 1. ADD USER (The problematic function)
   // ------------------------------------------------------------------
   async addUser(name: string, role: Role, mobile: string, pin: string) {
-    console.group("🚀 Debug: addUser Triggered");
-    const startTime = performance.now();
-
+    console.log("🚀 Add-User Triggered");
+    
     try {
-      // 1. Log the payload to ensure data is clean before sending
-      const payload = { name, role, mobile, pin };
-      console.log("📦 Payload being sent:", payload);
-
-      // 2. Invoke the function
-      console.log("📡 Contacting Edge Function: 'admin-create-user'...");
+      // 1. Invoke the Edge Function
       const { data, error } = await supabase.functions.invoke('admin-create-user', {
-        body: payload
+        body: { name, role, mobile, pin }
       });
 
-      const duration = (performance.now() - startTime).toFixed(2);
-      console.log(`⏱️ Request Duration: ${duration}ms`);
-
-      // 3. Analyze the response deeply
+      // 2. Handle Network Errors
       if (error) {
-        console.error("❌ CRITICAL: Supabase Connection Error");
-        console.error("Details:", error);
-        
-        // Specific check for the "Function not found" 404 error
-        if (error instanceof Error && error.message.includes("404")) {
-          alert("DEPLOYMENT ERROR: The 'admin-create-user' function was not found. Please run 'supabase functions deploy'.");
-        } else {
-          alert(`Network Error (${error.message || 'Unknown'}). Check console.`);
-        }
+        console.error("❌ Connection Error:", error);
+        alert("Network error: " + error.message);
         return;
       }
 
-      // 4. Check for logic errors returned by the function itself
+      // 3. Handle Logic Errors
       if (data?.error) {
-        console.error("❌ FUNCTION LOGIC ERROR:", data.error);
-        alert("Server Logic Error: " + data.error);
+        console.error("❌ Database Error:", data.error);
+        alert("Error: " + data.error);
         return;
       }
 
-      // 5. Success
-      console.log("✅ Success! Data received:", data);
+      // 4. SUCCESS -> RELOAD
+      console.log("✅ Success:", data);
       alert("Staff member created successfully!");
+      window.location.reload(); // <--- RELOADS ONLY AFTER SUCCESS
 
-    } catch (crashError: any) {
-      console.error("💥 SYSTEM CRASH in addUser:", crashError);
-      alert("Unexpected System Error: " + (crashError.message || crashError));
-    } finally {
-      console.groupEnd();
+    } catch (err: any) {
+      console.error("💥 System Error:", err);
+      alert("System Error: " + err.message);
     }
   },
 
@@ -99,44 +82,22 @@ export const userService = {
   // 3. DELETE USER
   // ------------------------------------------------------------------
   async deleteUser(userId: string, currentUserId: string) {
-    console.group(`🗑️ Debug: deleteUser (${userId})`);
-    
-    try {
-      console.log('Current Admin ID:', currentUserId);
-      
-      if (userId === currentUserId) {
-        alert("Cannot delete yourself!");
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId)
-        .select();
-      
-      console.log('Supabase Response:', { data, error });
-      
-      if (error) {
-        console.error('❌ Delete DB Error:', error);
-        alert("Delete failed: " + error.message);
-        throw error;
-      }
-      
-      if (!data || data.length === 0) {
-        console.warn('⚠️ No rows deleted. The user might not exist or RLS is blocking delete.');
-        alert("Delete failed: Permission denied or user not found");
-        throw new Error("No rows deleted");
-      }
-      
-      console.log('✅ Profile deleted from DB:', data);
-      return data;
+    if (userId === currentUserId) {
+      alert("Cannot delete yourself!");
+      return;
+    }
 
-    } catch (err) {
-      console.error("Delete Exception:", err);
-      throw err;
-    } finally {
-      console.groupEnd();
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) {
+      alert("Delete failed: " + error.message);
+    } else {
+      // SUCCESS -> RELOAD
+      alert("User deleted successfully.");
+      window.location.reload(); // <--- RELOADS ONLY AFTER SUCCESS
     }
   },
 
