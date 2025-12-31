@@ -94,8 +94,19 @@ export default function App() {
             onCreateBatch={batchService.createBatch}
             onPayKarigar={userService.handleTransaction}
             onArchiveBatch={batchService.handleArchive}
-            onAddUser={userService.addUser}
-            onDeleteUser={(userId) => userService.deleteUser(userId, currentUser.id)}
+            
+            // ✅ FIX 1: Wait for 'addUser' to finish, THEN reload
+            onAddUser={async (name, role, mobile, pin) => {
+              await userService.addUser(name, role, mobile, pin);
+              window.location.reload();
+            }}
+
+            // ✅ FIX 2: Wait for 'deleteUser' to finish, THEN reload
+            onDeleteUser={async (userId) => {
+              await userService.deleteUser(userId, currentUser.id);
+              window.location.reload();
+            }}
+
             onUpdateUser={userService.updateUser}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
           />
