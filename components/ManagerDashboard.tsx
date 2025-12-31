@@ -54,8 +54,8 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   const assignableBatches = batches.filter(b => 
     b.status === BatchStatus.CUTTING_DONE || b.status === BatchStatus.IN_PRODUCTION
   );
-  const pendingQCItems = batches.flatMap(b => 
-    b.assignments
+const pendingQCItems = (batches || []).flatMap(b =>
+  b.assignments
       .filter(a => a.status === AssignmentStatus.STITCHED)
       .map(a => ({ ...a, batch: b }))
   );
