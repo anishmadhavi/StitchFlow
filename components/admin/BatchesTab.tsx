@@ -45,7 +45,7 @@ export const BatchesTab: React.FC<BatchesTabProps> = ({
               <span className="text-sm text-gray-500">Rate: ₹{batch.ratePerPiece}</span>
             </div>
             <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
-              {Object.entries(batch.plannedQty)
+              {batch.plannedQty && Object.entries(batch.plannedQty)
                 .filter(([_, q]) => (q as number) > 0)
                 .map(([s, q]) => (
                   <span key={s} className="bg-gray-100 px-2 py-0.5 rounded border">
