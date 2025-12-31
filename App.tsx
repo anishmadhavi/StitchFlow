@@ -95,13 +95,15 @@ export default function App() {
             onPayKarigar={userService.handleTransaction}
             onArchiveBatch={batchService.handleArchive}
             
-            // ✅ FIX 1: Wait for 'addUser' to finish, THEN reload
+            // ✅ CORRECT FIX: Add 'async' and 'await'
             onAddUser={async (name, role, mobile, pin) => {
+              // 1. Wait for the database to finish
               await userService.addUser(name, role, mobile, pin);
+              // 2. ONLY THEN refresh the page
               window.location.reload();
             }}
 
-            // ✅ FIX 2: Wait for 'deleteUser' to finish, THEN reload
+            // ✅ Apply the same fix for Deleting
             onDeleteUser={async (userId) => {
               await userService.deleteUser(userId, currentUser.id);
               window.location.reload();
