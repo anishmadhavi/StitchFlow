@@ -32,7 +32,7 @@ export const AllocationTab: React.FC<AllocationTabProps> = ({
           {pendingCuttingBatches.length === 0 && (
             <p className="text-sm text-gray-500">No batches waiting for cutting.</p>
           )}
-          {pendingCuttingBatches.map(batch => (
+          {pendingCuttingBatches.length > 0 && pendingCuttingBatches.map(batch => (
             <Card key={batch.id} className="p-4 border-l-4 border-l-indigo-500">
               <div className="flex gap-4">
                 <img 
@@ -65,7 +65,7 @@ export const AllocationTab: React.FC<AllocationTabProps> = ({
           {assignableBatches.length === 0 && (
             <p className="text-sm text-gray-500">No stock available for assignment.</p>
           )}
-          {assignableBatches.map(batch => {
+          {assignableBatches.length > 0 && assignableBatches.map(batch => {
             const totalAvailable = (Object.values(batch.availableQty) as number[])
               .reduce((a, b) => a + b, 0);
             
