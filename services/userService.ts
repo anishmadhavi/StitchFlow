@@ -49,54 +49,52 @@ export const userService = {
   },
 
   async deleteUser(userId: string, currentUserId: string) {
-    console.log('🗑️ deleteUser called');
-    console.log('🗑️ userId to delete:', userId);
+    console.log('DELETE: deleteUser called');
+    console.log('DELETE: userId to delete:', userId);
     
     if (userId === currentUserId) {
       alert("Cannot delete yourself!");
       return;
     }
     
-    // 1️⃣ Delete from profiles table
+    // Step 1: Delete from profiles table
     const { data, error } = await supabase
       .from('profiles')
       .delete()
       .eq('id', userId)
       .select();
     
-    console.log('🗑️ Profile delete result:', { data, error });
+    console.log('DELETE: Profile delete result:', { data, error });
     
     if (error) {
-      console.error('❌ Delete error:', error);
+      console.error('ERROR: Delete error:', error);
       alert("Delete failed: " + error.message);
       throw error;
     }
     
     if (!data || data.length === 0) {
-      console.warn('⚠️ No profile deleted');
+      console.warn('WARNING: No profile deleted');
       alert("Delete failed: Permission denied");
       throw new Error("No rows deleted");
     }
     
-    // 2️⃣ Delete from auth using Edge Function
+    // Step 2: Delete from auth using Edge Function
     try {
-      console.log('🗑️ Calling delete-auth-user function...');
+      console.log('DELETE: Calling delete-auth-user function...');
       const { error: authError } = await supabase.functions.invoke('delete-auth-user', {
         body: { userId }
       });
       
       if (authError) {
-        console.warn('⚠️ Auth delete failed:', authError);
-        // Continue anyway - profile is already deleted
+        console.warn('WARNING: Auth delete failed:', authError);
       } else {
-        console.log('✅ Auth user deleted');
+        console.log('SUCCESS: Auth user deleted');
       }
     } catch (err) {
-      console.warn('⚠️ Auth delete error:', err);
-      // Continue anyway
+      console.warn('WARNING: Auth delete error:', err);
     }
     
-    console.log('✅ User fully deleted');
+    console.log('SUCCESS: User fully deleted');
     return data;
   },
 
