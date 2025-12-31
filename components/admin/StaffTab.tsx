@@ -57,7 +57,12 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                   </div>
                 </div>
                 <button 
-                  onClick={() => onDeleteUser(user.id)} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Delete ${user.name}?`)) {
+                      onDeleteUser(user.id);
+                    }
+                  }} 
                   className="text-gray-400 hover:text-red-600 transition-colors p-1"
                 >
                   <Trash2 size={16} />
