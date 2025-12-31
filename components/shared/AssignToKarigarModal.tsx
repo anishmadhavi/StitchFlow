@@ -1,6 +1,6 @@
 /**
  * components/shared/AssignToKarigarModal.tsx
- * Purpose: Assign batch stock to karigar (Shared component)
+ * Purpose: Assign batch stock to karigar (Shared component - NULL SAFE)
  */
 
 import React, { useState } from 'react';
@@ -36,6 +36,10 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
     }
   };
 
+  // Safe access to availableQty
+  const availableQty = batch?.availableQty || {};
+  const availableEntries = Object.entries(availableQty).filter(([_, v]) => (v as number) > 0);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Assign to Karigar">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -51,28 +55,24 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
           ))}
         </select>
 
-        <div className="bg-gray-50 p-3 rounded text-sm grid grid-cols-2 gap-2 text-xs">
-          {Object.entries(batch.availableQty || {})
-            .filter(([_,v]) => (v as number) > 0)
-            .map(([k,v]) => (
-              <span key={k}>{k}: {v as number}</span>
-            ))}
-        </div>
+        {availableEntries.length > 0 ? (
+          <>
+            <div className="bg-gray-50 p-3 rounded text-sm grid grid-cols-2 gap-2 text-xs">
+              {availableEntries.map(([k, v]) => (
+                <span key={k}>{k}: {v as number}</span>
+              ))}
+            </div>
 
-        <div className="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto">
-          {Object.keys(batch.availableQty || {})
-            .filter(k => (batch.availableQty[k] || 0) > 0)
-            .map(size => {
-              const max = batch.availableQty[size] || 0;
-              return (
+            <div className="grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto">
+              {availableEntries.map(([size, max]) => (
                 <div key={size}>
                   <label className="block text-xs font-medium text-center truncate mb-1">
-                    {size} (Max: {max})
+                    {size} (Max: {max as number})
                   </label>
                   <input 
                     type="number" 
                     min="0" 
-                    max={max} 
+                    max={max as number} 
                     className="w-full border rounded p-2 text-center" 
                     value={form.qty[size] || ''} 
                     onChange={e => setForm({
@@ -81,13 +81,20 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
                     })} 
                   />
                 </div>
-              );
-            })}
-        </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm text-yellow-800">
+            No stock available for assignment.
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-4">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit">Assign Stock</Button>
+          <Button type="submit" disabled={availableEntries.length === 0}>
+            Assign Stock
+          </Button>
         </div>
       </form>
     </Modal>
