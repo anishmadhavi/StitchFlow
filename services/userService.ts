@@ -1,7 +1,7 @@
 /**
  * services/userService.ts
- * Purpose: User management operations - Add/update/delete users, Handle transactions (credit/debit)
- * DEBUG MODE: ENABLED 🔍
+ * LOCATION: src/services/userService.ts
+ * VERSION: RAW FETCH DEBUGGING 🛠️
  */
 
 import { supabase } from '../src/supabaseClient';
@@ -9,38 +9,60 @@ import { Role, User } from '../types';
 
 export const userService = {
   // ------------------------------------------------------------------
-  // 1. ADD USER (The problematic function)
+  // 1. ADD USER (Raw Fetch Version)
   // ------------------------------------------------------------------
   async addUser(name: string, role: Role, mobile: string, pin: string) {
-    console.log("🚀 Add-User Triggered");
+    // 🚨 THIS LOG PROVES THE NEW FILE IS ACTIVE
+    console.log("✅ CORRECT FILE LOADED: Raw Fetch Version Active");
+    console.log("🚀 Add-User Triggered for:", name);
     
     try {
-      // 1. Invoke the Edge Function
-      const { data, error } = await supabase.functions.invoke('admin-create-user', {
-        body: { name, role, mobile, pin }
+      // 1. Get Session Token (Required for security)
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert("Security Error: You are not logged in.");
+        return;
+      }
+
+      // 2. Prepare Payload
+      const payload = { name, role, mobile, pin };
+      console.log("📦 Payload:", payload);
+
+      // 3. SEND REQUEST (Using Raw Fetch to bypass library issues)
+      console.log("📡 Sending Request to Edge Function...");
+      
+      // We use the URL you confirmed earlier
+      const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/admin-create-user', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
       });
 
-      // 2. Handle Network Errors
-      if (error) {
-        console.error("❌ Connection Error:", error);
-        alert("Network error: " + error.message);
+      console.log("📡 Response Code:", response.status);
+
+      // 4. Handle Response
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Server Error Body:", errorText);
+        alert(`Server Error (${response.status}): ${errorText}`);
         return;
       }
 
-      // 3. Handle Logic Errors
-      if (data?.error) {
-        console.error("❌ Database Error:", data.error);
-        alert("Error: " + data.error);
-        return;
-      }
-
-      // 4. SUCCESS -> RELOAD
-      console.log("✅ Success:", data);
+      // 5. Success
+      const data = await response.json();
+      console.log("✅ Success Data:", data);
       alert("Staff member created successfully!");
-      window.location.reload(); // <--- RELOADS ONLY AFTER SUCCESS
+      
+      // 6. Reload to show changes
+      window.location.reload();
 
     } catch (err: any) {
-      console.error("💥 System Error:", err);
+      console.error("💥 System Crash:", err);
       alert("System Error: " + err.message);
     }
   },
@@ -49,90 +71,70 @@ export const userService = {
   // 2. UPDATE USER
   // ------------------------------------------------------------------
   async updateUser(userId: string, updates: Partial<User>) {
-    console.group(`✏️ Debug: updateUser (${userId})`);
+    console.group(`✏️ updateUser Triggered for ${userId}`);
     
-    // 1. Prepare the database object
     const dbUpdates: any = {};
-    
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
     
-    // ✅ FIX: Map BOTH 'pin' and 'displayPin' to the correct DB column: 'display_pin'
-    // If the UI sends 'pin', we save it as 'display_pin'
+    // Fix for 'pin' vs 'display_pin'
     if (updates.pin) dbUpdates.display_pin = updates.pin; 
     if (updates.displayPin) dbUpdates.display_pin = updates.displayPin;
 
-    console.log("📦 Sending to DB:", dbUpdates);
-
-    // 2. Send update
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('profiles')
       .update(dbUpdates)
-      .eq('id', userId)
-      .select();
+      .eq('id', userId);
 
     if (error) {
       console.error("❌ Update Failed:", error);
       alert("Update failed: " + error.message);
     } else {
-      console.log("✅ Update Verified:", data);
-      // Optional: Refresh if you want the UI to update instantly
-      // window.location.reload(); 
+      console.log("✅ Update Success");
+      alert("Update successful!");
     }
     console.groupEnd();
   },
+
   // ------------------------------------------------------------------
   // 3. DELETE USER
   // ------------------------------------------------------------------
   async deleteUser(userId: string, currentUserId: string) {
-    console.log("🗑️ deleteUser Triggered for:", userId);
-
     if (userId === currentUserId) {
       alert("Cannot delete yourself!");
       return;
     }
 
-    // 1. Delete from Database (Profiles Table)
+    if (!confirm("Are you sure you want to delete this staff member?")) return;
+
+    // 1. Delete from Database
     const { error: dbError } = await supabase
       .from('profiles')
       .delete()
       .eq('id', userId);
 
     if (dbError) {
-      console.error("❌ DB Delete Failed:", dbError);
       alert("Delete failed: " + dbError.message);
       return;
     }
 
-    // 2. Call Edge Function to Delete Login (Auth)
-    // (This was missing in the previous code!)
-    console.log("📡 Calling Edge Function to delete Auth...");
+    // 2. Delete from Auth (Edge Function)
     const { error: authError } = await supabase.functions.invoke('delete-auth-user', {
       body: { userId }
     });
 
-    if (authError) {
-      console.warn("⚠️ Profile deleted, but Auth delete failed:", authError);
-      // We don't stop here because the profile is already gone, so we just warn the user.
-    } else {
-      console.log("✅ Auth delete success");
-    }
+    if (authError) console.warn("Auth delete failed:", authError);
 
-    // 3. Success -> Reload Page
     alert("User deleted successfully.");
     window.location.reload();
   },
 
   // ------------------------------------------------------------------
-  // 4. TRANSACTION
+  // 4. TRANSACTIONS
   // ------------------------------------------------------------------
   async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
-    console.group(`💰 Debug: handleTransaction (${type})`);
-    console.log("Amount:", amount, "User:", userId);
-
     const signedAmount = type === 'CREDIT' ? amount : -amount;
 
-    // 1. Insert into Ledger
     const { error: ledgerError } = await supabase
       .from('ledger_entries')
       .insert([{
@@ -142,21 +144,15 @@ export const userService = {
         type: type
       }]);
 
-    if (ledgerError) console.error("❌ Ledger Insert Failed:", ledgerError);
-
-    // 2. Update Wallet (RPC)
     const { error: walletError } = await supabase.rpc('increment_wallet', { 
       user_id: userId, 
       amount: signedAmount 
     });
 
-    if (walletError) console.error("❌ Wallet RPC Failed:", walletError);
-
     if (ledgerError || walletError) {
-      alert("Transaction failed. Check console for details.");
+      alert("Transaction failed");
     } else {
-      console.log("✅ Transaction Complete");
+      console.log("✅ Transaction Success");
     }
-    console.groupEnd();
-  },
+  }
 };
