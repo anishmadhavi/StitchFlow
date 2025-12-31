@@ -32,6 +32,7 @@ interface AdminDashboardProps {
   onAddUser: (name: string, role: Role, mobile: string, pin: string) => void;
   onDeleteUser: (userId: string) => void;
   onAssignToKarigar: (batchId: string, karigarId: string, qty: SizeQty) => void;
+  onUpdateUser?: (userId: string, updates: Partial<User>) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -140,6 +141,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           getActiveAssignments={getActiveAssignments}
           onAddStaff={() => setCreateUserModalOpen(true)}
           onDeleteUser={onDeleteUser}
+          onUpdateUser={onUpdateUser}
         />
       )}
 
