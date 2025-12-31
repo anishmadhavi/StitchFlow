@@ -1,6 +1,6 @@
 /**
  * components/admin/CreateBatchModal.tsx
- * Purpose: Form to create new production batch
+ * STATUS: FIXED (Force Submit Mode) ✅
  */
 
 import React, { useState } from 'react';
@@ -8,7 +8,7 @@ import { supabase } from '../../src/supabaseClient';
 import { RefreshCw, Upload } from 'lucide-react';
 import { Batch, SizeQty } from '../../types';
 import { SIZE_OPTIONS } from '../../constants';
-import { Button, Modal } from '../Shared';
+import { Modal } from '../Shared'; // Removed 'Button' import to use standard HTML
 
 interface CreateBatchModalProps {
   isOpen: boolean;
@@ -49,6 +49,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log("📤 Uploading image...");
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `design-images/${fileName}`;
@@ -58,6 +59,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
       .upload(filePath, file);
 
     if (uploadError) {
+      console.error("❌ Upload Failed:", uploadError);
       alert("Upload failed: " + uploadError.message);
       return;
     }
@@ -66,12 +68,35 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
       .from('designs')
       .getPublicUrl(filePath);
 
+    console.log("✅ Image Uploaded:", publicUrl);
     setForm(prev => ({ ...prev, imageUrl: publicUrl }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(form);
+  // ✅ FORCE SUBMIT HANDLER (Bypasses Form issues)
+  const handleForceSubmit = () => {
+    console.log("🚀 Create Batch Triggered manually");
+    console.log("📦 Form Data:", form);
+
+    // 1. Validation
+    if (!form.styleName || !form.sku) {
+      alert("Please enter Style Name and SKU");
+      return;
+    }
+    if (form.ratePerPiece <= 0) {
+      alert("Rate must be greater than 0");
+      return;
+    }
+
+    // 2. Submit
+    try {
+      onSubmit(form);
+      console.log("✅ onSubmit called successfully");
+    } catch (e) {
+      console.error("❌ Error in parent onSubmit:", e);
+      alert("System Error: " + e);
+    }
+
+    // 3. Reset
     onClose();
     setForm({
       styleName: '',
@@ -84,7 +109,8 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create New Production Batch">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Changed form to div to prevent accidental submit interference */}
+      <div className="space-y-4">
         <div className="flex justify-end">
           <button 
             type="button" 
@@ -98,7 +124,6 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">Style Name</label>
           <input 
-            required
             type="text" 
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
             value={form.styleName}
@@ -110,7 +135,6 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-gray-700">SKU</label>
             <input 
-              required
               type="text" 
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
               value={form.sku}
@@ -120,7 +144,6 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
           <div>
             <label className="block text-sm font-medium text-gray-700">Rate (₹/pc)</label>
             <input 
-              required
               type="number" 
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
               value={form.ratePerPiece}
@@ -186,10 +209,24 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
         </div>
 
         <div className="pt-4 flex justify-end gap-3">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit">Create Batch</Button>
+          <button 
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+          >
+            Cancel
+          </button>
+          
+          {/* ✅ THE FIX: Standard Button with explicit onClick */}
+          <button 
+            type="button" 
+            onClick={handleForceSubmit}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          >
+            Create Batch
+          </button>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 };
