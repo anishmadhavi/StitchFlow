@@ -44,6 +44,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onDeleteUser,
   onAssignToKarigar
 }) => {
+  // 🔍 TEMPORARY DEBUG LOGS
+  console.log('🔍 AdminDashboard rendered');
+  console.log('📦 batches:', batches);
+  console.log('👥 users:', users);
+  console.log('📊 batches type:', typeof batches, Array.isArray(batches));
+  
   const [activeTab, setActiveTab] = useState<'batches' | 'staff' | 'payments' | 'settings'>('batches');
   
   // Modal states
