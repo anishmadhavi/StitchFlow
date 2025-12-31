@@ -85,23 +85,42 @@ export const userService = {
   // 3. DELETE USER
   // ------------------------------------------------------------------
   async deleteUser(userId: string, currentUserId: string) {
+    console.log("🗑️ deleteUser Triggered for:", userId);
+
     if (userId === currentUserId) {
       alert("Cannot delete yourself!");
       return;
     }
 
-    const { error } = await supabase
+    // 1. Delete from Database (Profiles Table)
+    const { error: dbError } = await supabase
       .from('profiles')
       .delete()
       .eq('id', userId);
 
-    if (error) {
-      alert("Delete failed: " + error.message);
-    } else {
-      // SUCCESS -> RELOAD
-      alert("User deleted successfully.");
-      window.location.reload(); // <--- RELOADS ONLY AFTER SUCCESS
+    if (dbError) {
+      console.error("❌ DB Delete Failed:", dbError);
+      alert("Delete failed: " + dbError.message);
+      return;
     }
+
+    // 2. Call Edge Function to Delete Login (Auth)
+    // (This was missing in the previous code!)
+    console.log("📡 Calling Edge Function to delete Auth...");
+    const { error: authError } = await supabase.functions.invoke('delete-auth-user', {
+      body: { userId }
+    });
+
+    if (authError) {
+      console.warn("⚠️ Profile deleted, but Auth delete failed:", authError);
+      // We don't stop here because the profile is already gone, so we just warn the user.
+    } else {
+      console.log("✅ Auth delete success");
+    }
+
+    // 3. Success -> Reload Page
+    alert("User deleted successfully.");
+    window.location.reload();
   },
 
   // ------------------------------------------------------------------
