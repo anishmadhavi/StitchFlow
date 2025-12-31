@@ -26,11 +26,9 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       </div>
       
       <div className="grid grid-cols-1 gap-4">
-        {batches.length === 0 && (
-          <p className="text-gray-500 text-center py-4">No active batches.</p>
-        )}
-        
-        {batches.map(batch => (
+{batches.length === 0 ? (
+  <p className="text-gray-500 text-center py-4">No active batches.</p>
+) : batches.map(batch => (
           <Card key={batch.id} className="flex flex-col md:flex-row md:items-center p-4 gap-4">
             <img 
               src={batch.imageUrl} 
