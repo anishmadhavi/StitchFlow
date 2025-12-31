@@ -74,9 +74,24 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                 <div className="flex items-center gap-2 text-xs text-yellow-800">
                   <Key size={12} />
                   <span className="font-medium">PIN:</span>
-                  <span className="font-mono bg-yellow-100 px-1 rounded select-all">
-                    {user.displayPin || user.pin || 'Not set'}
-                  </span>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    pattern="[0-9]{6}"
+                    className="font-mono bg-yellow-100 px-2 py-1 rounded border border-yellow-300 focus:border-yellow-500 focus:outline-none w-20 text-center"
+                    defaultValue={user.displayPin || user.pin || ''}
+                    placeholder="123456"
+                    onBlur={(e) => {
+                      const newPin = e.target.value;
+                      if (newPin && newPin.length === 6) {
+                        // Update PIN in database
+                        fetch('/api/update-pin', {
+                          method: 'POST',
+                          body: JSON.stringify({ userId: user.id, pin: newPin })
+                        });
+                      }
+                    }}
+                  />
                 </div>
               </div>
               
