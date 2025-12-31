@@ -96,6 +96,7 @@ export default function App() {
             onArchiveBatch={batchService.handleArchive}
             onAddUser={userService.addUser}
             onDeleteUser={(userId) => userService.deleteUser(userId, currentUser.id)}
+            onUpdateUser={userService.updateUser}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
           />
         )}
