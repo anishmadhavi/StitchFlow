@@ -43,6 +43,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onArchiveBatch,
   onAddUser,
   onDeleteUser,
+  onUpdateUser,
   onAssignToKarigar
 }) => {
   // 🔍 TEMPORARY DEBUG LOGS
