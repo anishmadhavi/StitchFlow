@@ -1,6 +1,6 @@
 /**
  * hooks/useData.ts
- * Purpose: Manages data fetching and real-time subscriptions, Fetches users and batches from DB, Sets up real-time subscriptions, **Exports:** `useData(currentUser)` hook
+ * Purpose: Manages data fetching and real-time subscriptions
  */
 
 import { useState, useEffect } from 'react';
@@ -49,7 +49,7 @@ export function useData(currentUser: User | null) {
 
     fetchData();
 
-        // Setup Real-time Subscription for Profiles
+    // Setup Real-time Subscription for Profiles
     const profilesChannel = supabase
       .channel('profiles-changes')
       .on('postgres_changes', 
@@ -90,3 +90,7 @@ export function useData(currentUser: User | null) {
       supabase.removeChannel(batchesChannel).catch(err => console.error('Channel cleanup error:', err));
       supabase.removeChannel(assignmentsChannel).catch(err => console.error('Channel cleanup error:', err));
     };
+  }, [currentUser]);
+
+  return { users, batches, dataLoading };
+}
