@@ -1,6 +1,6 @@
 /**
  * components/shared/QCInspectionModal.tsx
- * Purpose: QC inspection with pass/rework (used by Manager & QC)
+ * Purpose: QC inspection with pass/rework (NULL SAFE)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -23,9 +23,9 @@ export const QCInspectionModal: React.FC<QCInspectionModalProps> = ({
 }) => {
   const [qcForm, setQcForm] = useState<SizeQty>({});
 
-  // Initialize form with all passed (optimistic default)
+  // Initialize form with all passed (optimistic default) - NULL SAFE
   useEffect(() => {
-    if (item) {
+    if (item?.assignedQty) {
       setQcForm(item.assignedQty);
     }
   }, [item]);
@@ -36,7 +36,7 @@ export const QCInspectionModal: React.FC<QCInspectionModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (item) {
+    if (item?.batch?.id && item?.id) {
       onSubmit(item.batch.id, item.id, qcForm);
       onClose();
     }
@@ -44,8 +44,10 @@ export const QCInspectionModal: React.FC<QCInspectionModalProps> = ({
 
   if (!item) return null;
 
-  const totalPassed = Object.values(qcForm).reduce((a, b) => a + (b as number), 0);
-  const totalAssigned = Object.values(item.assignedQty).reduce((a, b) => a + (b as number), 0);
+  // NULL SAFE calculations
+  const assignedQty = item.assignedQty || {};
+  const totalPassed = Object.values(qcForm).reduce((a, b) => a + (Number(b) || 0), 0);
+  const totalAssigned = Object.values(assignedQty).reduce((a, b) => a + (Number(b) || 0), 0);
   const totalRework = totalAssigned - totalPassed;
 
   return (
@@ -62,17 +64,18 @@ export const QCInspectionModal: React.FC<QCInspectionModalProps> = ({
         {/* Batch Info */}
         <div className="bg-gray-50 p-3 rounded border">
           <p className="text-sm">
-            <strong>{item.batch.styleName}</strong> • Karigar: {item.karigarName}
+            <strong>{item.batch?.styleName || 'Batch'}</strong> • 
+            Karigar: {item.karigarName || 'Unknown'}
           </p>
         </div>
 
         {/* Size Inputs */}
         <div className="max-h-[50vh] overflow-y-auto pr-1 grid grid-cols-1 gap-4">
-          {Object.keys(item.assignedQty).map(size => {
-            const max = item.assignedQty[size] || 0;
+          {Object.entries(assignedQty).map(([size, maxValue]) => {
+            const max = Number(maxValue) || 0;
             if (max === 0) return null;
 
-            const passed = qcForm[size] !== undefined ? qcForm[size] : max;
+            const passed = qcForm[size] !== undefined ? Number(qcForm[size]) : max;
             const rework = max - passed;
 
             return (
