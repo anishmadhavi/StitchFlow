@@ -68,6 +68,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({
         await onDeleteUser(user.id);
         console.log('✅ Delete completed');
         alert('Staff deleted successfully!');
+        window.location.reload();
       } catch (error) {
         console.error('❌ Delete failed:', error);
         alert('Error deleting staff: ' + error);
