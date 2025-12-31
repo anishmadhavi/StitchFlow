@@ -1,19 +1,20 @@
 /**
  * services/userService.ts
- * SOLUTION: Bypass supabase.auth.getSession() and read LocalStorage directly.
+ * LOCATION: src/services/userService.ts
+ * STATUS: FIXED & COMPLETE ✅
  */
 
 import { supabase } from '../src/supabaseClient';
 import { Role, User } from '../types';
 
 export const userService = {
+  // ------------------------------------------------------------------
+  // 1. ADD USER (Manual Token Fix)
+  // ------------------------------------------------------------------
   async addUser(name: string, role: Role, mobile: string, pin: string) {
     console.log("🚀 Add-User (Manual Token Mode) Triggered");
     
     try {
-      // 🛑 BYPASS: Don't call supabase.auth.getSession()
-      // ✅ DIRECT: Read the token from LocalStorage manually
-      
       console.log("🔍 Reading LocalStorage for 'stitchflow-v2'...");
       const rawData = localStorage.getItem('stitchflow-v2');
       
@@ -22,17 +23,14 @@ export const userService = {
         return;
       }
 
-      // Parse the JSON manually
       const sessionData = JSON.parse(rawData);
       const token = sessionData?.access_token;
 
       if (!token) {
-        alert("Error: Token missing from storage. Please Log Out and Log In again.");
+        alert("Error: Token missing. Please Log Out and Log In again.");
         return;
       }
       
-      console.log("✅ Token found manually!");
-
       // Prepare Payload
       const payload = { name, role, mobile, pin };
 
@@ -41,7 +39,7 @@ export const userService = {
       const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/admin-create-user', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`, // We use the manual token here
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
@@ -65,18 +63,23 @@ export const userService = {
     }
   },
 
-  // ... (Keep your other functions like updateUser, deleteUser, etc.)
+  // ------------------------------------------------------------------
+  // 2. UPDATE USER
+  // ------------------------------------------------------------------
   async updateUser(userId: string, updates: Partial<User>) {
-      const dbUpdates: any = {};
-      if (updates.name) dbUpdates.name = updates.name;
-      if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
-      if (updates.pin) dbUpdates.display_pin = updates.pin; 
-      if (updates.displayPin) dbUpdates.display_pin = updates.displayPin;
+    const dbUpdates: any = {};
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
+    if (updates.pin) dbUpdates.display_pin = updates.pin; 
+    if (updates.displayPin) dbUpdates.display_pin = updates.displayPin;
 
-      const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', userId);
-      if (error) alert(error.message); else alert("Updated!");
+    const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', userId);
+    if (error) alert(error.message); else alert("Updated!");
   },
 
+  // ------------------------------------------------------------------
+  // 3. DELETE USER (Manual Token Fix)
+  // ------------------------------------------------------------------
   async deleteUser(userId: string, currentUserId: string) {
     console.log("🗑️ deleteUser Triggered for:", userId);
 
@@ -98,9 +101,8 @@ export const userService = {
       return;
     }
 
-    // 2. Delete from Auth (Using Manual Token Fetch to avoid freezing)
+    // 2. Delete from Auth (Using Manual Token Fetch)
     try {
-      // Get Token Manually (Same trick as addUser)
       const rawData = localStorage.getItem('stitchflow-v2');
       const sessionData = rawData ? JSON.parse(rawData) : null;
       const token = sessionData?.access_token;
@@ -113,13 +115,12 @@ export const userService = {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ userId }) // Sending the ID clearly
+          body: JSON.stringify({ userId })
         });
 
         if (!response.ok) {
            const errText = await response.text();
            console.error("❌ Auth Delete Failed:", errText);
-           // We don't alert here because the profile is already gone, which is the important part for the UI.
         } else {
            console.log("✅ Auth Delete Success");
         }
@@ -134,3 +135,32 @@ export const userService = {
     alert("User deleted successfully.");
     window.location.reload();
   },
+
+  // ------------------------------------------------------------------
+  // 4. TRANSACTION (Required by App.tsx)
+  // ------------------------------------------------------------------
+  async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
+    const signedAmount = type === 'CREDIT' ? amount : -amount;
+
+    const { error: ledgerError } = await supabase
+      .from('ledger_entries')
+      .insert([{
+        user_id: userId,
+        description: remark || (type === 'CREDIT' ? 'Manual Credit' : 'Manual Debit'),
+        amount: amount,
+        type: type
+      }]);
+
+    const { error: walletError } = await supabase.rpc('increment_wallet', { 
+      user_id: userId, 
+      amount: signedAmount 
+    });
+
+    if (ledgerError || walletError) {
+      alert("Transaction failed");
+    } else {
+      console.log("✅ Transaction Success");
+      window.location.reload();
+    }
+  }
+};
