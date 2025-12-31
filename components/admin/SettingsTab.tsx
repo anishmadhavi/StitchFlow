@@ -40,12 +40,19 @@ export const SettingsTab: React.FC = () => {
     setMessage('');
 
     try {
+      // First check if table exists, if not just save to localStorage
       const { error } = await supabase
         .from('app_settings')
         .upsert({
           key: 'shopify_config',
           value: shopifyConfig
-        });
+        })
+        .select();
+
+      if (error) {
+        // Fallback to localStorage if table doesn't exist
+        localStorage.setItem('shopify_config', JSON.stringify(shopifyConfig));
+      }
 
       if (error) throw error;
 
