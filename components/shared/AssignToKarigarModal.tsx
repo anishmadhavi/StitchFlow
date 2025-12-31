@@ -1,13 +1,13 @@
 /**
- * components/admin/AssignModal.tsx
- * Purpose: Assign batch stock to karigar
+ * components/shared/AssignToKarigarModal.tsx
+ * Purpose: Assign batch stock to karigar (Shared component)
  */
 
 import React, { useState } from 'react';
 import { Batch, User, SizeQty } from '../../types';
 import { Button, Modal } from '../Shared';
 
-interface AssignModalProps {
+interface AssignToKarigarModalProps {
   isOpen: boolean;
   onClose: () => void;
   batch: Batch;
@@ -15,7 +15,7 @@ interface AssignModalProps {
   onSubmit: (batchId: string, karigarId: string, qty: SizeQty) => void;
 }
 
-export const AssignModal: React.FC<AssignModalProps> = ({
+export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
   isOpen,
   onClose,
   batch,
