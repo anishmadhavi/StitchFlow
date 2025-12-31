@@ -1,6 +1,6 @@
 /**
  * components/shared/CuttingModal.tsx
- * Purpose: Finalize cutting quantities (used by Manager & Master)
+ * Purpose: Finalize cutting quantities (NULL SAFE)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -21,12 +21,19 @@ export const CuttingModal: React.FC<CuttingModalProps> = ({
   batch,
   onSubmit
 }) => {
-  const [cutForm, setCutForm] = useState<SizeQty>(batch.plannedQty || {});
+  const [cutForm, setCutForm] = useState<SizeQty>({});
 
-  // Update form when batch changes
+  // Update form when batch changes - NULL SAFE
   useEffect(() => {
-    if (batch) {
-      setCutForm(batch.plannedQty || {});
+    if (batch?.plannedQty) {
+      setCutForm(batch.plannedQty);
+    } else {
+      // Initialize with zeros if no plannedQty
+      const emptyQty = SIZE_OPTIONS.reduce((acc, size) => {
+        acc[size] = 0;
+        return acc;
+      }, {} as SizeQty);
+      setCutForm(emptyQty);
     }
   }, [batch]);
 
@@ -41,7 +48,7 @@ export const CuttingModal: React.FC<CuttingModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
           <p className="text-sm text-blue-800">
-            <strong>{batch.styleName}</strong> - Enter actual cut quantities
+            <strong>{batch?.styleName || 'Batch'}</strong> - Enter actual cut quantities
           </p>
         </div>
 
