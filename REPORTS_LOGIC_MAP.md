@@ -40,31 +40,31 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenQCModal, handleOpenAssignModal, handleOpenCutModal
+> handleOpenAssignModal, pendingCuttingBatches, handleOpenCutModal, handleOpenQCModal, activeBatches
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenAssignModal, staffUsers, activeBatches, handleOpenPassbook, handleOpenBatchDetails, getActiveAssignments
+> handleOpenAssignModal, handleOpenBatchDetails, handleOpenPassbook, staffUsers, getActiveAssignments, activeBatches
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenAssignModal, handleOpenCutModal, calculateTotalAvailable
+> handleOpenAssignModal, calculateTotalAvailable, handleOpenCutModal
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> isAdvance, calculateTotalQty, handlePhotoUpload
+> handlePhotoUpload, isAdvance, calculateTotalQty
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenInspectModal, formatDate
+> formatDate, handleOpenInspectModal
 
 #### 📄 BatchesTab.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -130,7 +130,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleImageUpload, handleShopifySync, handleSubmit
+> handleShopifySync, handleSubmit, handleImageUpload
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -160,7 +160,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> initializeAuth, loadProfile, handleLogout, handleSignUp, useAuth, handleLogin
+> handleLogout, handleLogin, handleSignUp, useAuth, loadProfile, initializeAuth
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
