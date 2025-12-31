@@ -87,28 +87,18 @@ export default function App() {
 
       {/* Main Content - Role-based Dashboard */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
-      {currentUser.role === Role.ADMIN && (
+        {currentUser.role === Role.ADMIN && (
           <AdminDashboard 
             batches={batches}
             users={users}
             onCreateBatch={batchService.createBatch}
             onPayKarigar={userService.handleTransaction}
             onArchiveBatch={batchService.handleArchive}
-            // UPDATED: Refresh page after adding user so they appear immediately
-            onAddUser={(name, role, mobile, pin) => {
-              userService.addUser(name, role, mobile, pin);
-              window.location.reload();
-            }}
-            // UPDATED: Refresh page after deleting user so they disappear immediately
-            onDeleteUser={(userId) => {
-              userService.deleteUser(userId, currentUser.id);
-              window.location.reload();
-            }}
-            // NEW: Connects the PIN editing feature
-            onUpdateUser={userService.updateUser}
+            onAddUser={userService.addUser}
+            onDeleteUser={(userId) => userService.deleteUser(userId, currentUser.id)}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
           />
-        )} 
+        )}
 
         {currentUser.role === Role.MANAGER && (
           <ManagerDashboard 
