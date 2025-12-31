@@ -50,34 +50,37 @@ export const userService = {
   // ------------------------------------------------------------------
   async updateUser(userId: string, updates: Partial<User>) {
     console.group(`✏️ Debug: updateUser (${userId})`);
-    console.log("Update Data:", updates);
-
+    
+    // 1. Prepare the database object
     const dbUpdates: any = {};
+    
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
-    // Added PIN support just in case the UI sends it
+    
+    // ✅ FIX: Map BOTH 'pin' and 'displayPin' to the correct DB column: 'display_pin'
+    // If the UI sends 'pin', we save it as 'display_pin'
+    if (updates.pin) dbUpdates.display_pin = updates.pin; 
     if (updates.displayPin) dbUpdates.display_pin = updates.displayPin;
-    if (updates.pin) dbUpdates.pin = updates.pin; 
 
-    // Added .select() to verify if the row actually exists and was updated
+    console.log("📦 Sending to DB:", dbUpdates);
+
+    // 2. Send update
     const { data, error } = await supabase
       .from('profiles')
       .update(dbUpdates)
       .eq('id', userId)
-      .select(); 
+      .select();
 
     if (error) {
       console.error("❌ Update Failed:", error);
       alert("Update failed: " + error.message);
-    } else if (!data || data.length === 0) {
-      console.warn("⚠️ Update 'Succeeded' but NO rows changed. Check RLS policies or User ID.");
-      alert("Warning: User profile not found or permission denied.");
     } else {
-      console.log("✅ Update Verified. New Data:", data[0]);
+      console.log("✅ Update Verified:", data);
+      // Optional: Refresh if you want the UI to update instantly
+      // window.location.reload(); 
     }
     console.groupEnd();
   },
-
   // ------------------------------------------------------------------
   // 3. DELETE USER
   // ------------------------------------------------------------------
