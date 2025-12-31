@@ -21,12 +21,10 @@ export const BatchesTab: React.FC<BatchesTabProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 gap-4">
-      {batches.map(batch => (
-        <Card 
-          key={batch.id} 
-          className="flex flex-col md:flex-row md:items-center p-4 gap-4 hover:shadow-md transition-shadow cursor-pointer" 
-          onClick={() => onOpenDetails(batch)}
-        >
+{batches.length === 0 ? (
+  <p className="text-gray-500 text-center py-8">No batches yet. Create your first batch!</p>
+) : batches.map(batch => (
+  <Card key={batch.id} ...>
           <img 
             src={batch.imageUrl} 
             alt={batch.styleName} 
