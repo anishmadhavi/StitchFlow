@@ -40,31 +40,31 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenCutModal, handleOpenAssignModal, handleOpenQCModal
+> handleOpenQCModal, handleOpenCutModal, handleOpenAssignModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenPassbook, handleOpenAssignModal, getActiveAssignments, handleOpenBatchDetails
+> handleOpenPassbook, getActiveAssignments, handleOpenAssignModal, handleOpenBatchDetails
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleAssignSubmit, handleSelectKarigar, handleCutSubmit, openCutModal, totalAvailable, openAssignModal
+> openCutModal, openAssignModal, handleSelectKarigar, handleAssignSubmit, totalAvailable, handleCutSubmit
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> calculateTotalQty, handlePhotoUpload, isAdvance
+> handlePhotoUpload, isAdvance, calculateTotalQty
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> openInspectModal, handleQtyChange, totalPassed, formatDate, handleSubmit
+> formatDate, handleOpenInspectModal
 
 #### 📄 BatchesTab.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -130,7 +130,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleShopifySync, handleSubmit, handleImageUpload
+> handleImageUpload, handleShopifySync, handleSubmit
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -154,13 +154,13 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> useData, fetchData
+> fetchData, useData
 
 #### 📄 useAuth.ts
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleSignUp, handleLogout, handleLogin, useAuth, initializeAuth, loadProfile
+> handleSignUp, initializeAuth, handleLogin, handleLogout, loadProfile, useAuth
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
