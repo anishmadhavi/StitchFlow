@@ -46,25 +46,25 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenCutModal, activeBatches, pendingCuttingBatches, handleOpenQCModal, pendingQCItems, handleOpenAssignModal
+> activeBatches, pendingQCItems, pendingCuttingBatches, handleOpenAssignModal, handleOpenQCModal, handleOpenCutModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> activeBatches, handleOpenPassbook, staffUsers, handleOpenBatchDetails, handleOpenAssignModal, getActiveAssignments
+> activeBatches, staffUsers, handleOpenPassbook, handleOpenAssignModal, getActiveAssignments, handleOpenBatchDetails
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> assignableBatches, pendingBatches, handleOpenCutModal, calculateTotalAvailable, handleOpenAssignModal
+> pendingBatches, assignableBatches, handleOpenAssignModal, handleOpenCutModal, calculateTotalAvailable
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> isAdvance, handlePhotoUpload, calculateTotalQty
+> handlePhotoUpload, calculateTotalQty, isAdvance
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
@@ -82,7 +82,7 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> handleSave, loadSettings, testConnection
+> handleSave, testConnection, loadSettings
 
 #### 📄 PassbookModal.tsx
 **Purpose:** General Component/Utility
@@ -136,7 +136,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleShopifySync, handleImageUpload, handleSubmit
+> handleImageUpload, handleShopifySync, handleSubmit
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -160,13 +160,13 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> useData, fetchData
+> fetchData, useData
 
 #### 📄 useAuth.ts
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> loadProfile, useAuth, initializeAuth, handleLogin, handleLogout, handleSignUp
+> handleSignUp, handleLogin, loadProfile, initializeAuth, useAuth, handleLogout
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
