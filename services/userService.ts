@@ -44,10 +44,33 @@ export const userService = {
   },
 
   async deleteUser(userId: string, currentUserId: string) {
-    if (userId === currentUserId) return;
+    if (userId === currentUserId) {
+      alert("Cannot delete yourself!");
+      return;
+    }
     
-    const { error } = await supabase.from('profiles').delete().eq('id', userId);
-    if (error) alert("Delete failed: " + error.message);
+    console.log('🗑️ Attempting to delete user:', userId);
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId)
+      .select();
+    
+    console.log('🗑️ Delete result:', { data, error });
+    
+    if (error) {
+      console.error('❌ Delete error:', error);
+      alert("Delete failed: " + error.message);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      alert("Delete failed: User not found or permission denied");
+      throw new Error("Delete failed");
+    }
+    
+    console.log('✅ User deleted successfully');
   },
 
   async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
