@@ -85,16 +85,28 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                     type="text"
                     maxLength={6}
                     pattern="[0-9]{6}"
+                    id={`pin-${user.id}`}
                     className="font-mono bg-yellow-100 px-2 py-1 rounded border border-yellow-300 focus:border-yellow-500 focus:outline-none w-20 text-center"
                     defaultValue={user.displayPin || user.pin || ''}
                     placeholder="123456"
-                   onBlur={(e) => {
-                      const newPin = e.target.value;
+                  />
+                  <button
+                    onClick={() => {
+                      const input = document.getElementById(`pin-${user.id}`) as HTMLInputElement;
+                      const newPin = input?.value;
                       if (newPin && newPin.length === 6 && onUpdateUser) {
-                        onUpdateUser(user.id, { displayPin: newPin, pin: newPin });
+                        if (window.confirm(`Update PIN for ${user.name} to ${newPin}?`)) {
+                          onUpdateUser(user.id, { displayPin: newPin, pin: newPin });
+                          alert('PIN updated successfully!');
+                        }
+                      } else {
+                        alert('Please enter a valid 6-digit PIN');
                       }
                     }}
-                  />
+                    className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded border border-yellow-400"
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
               
