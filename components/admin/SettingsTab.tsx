@@ -1,238 +1,186 @@
 /**
- * components/admin/CreateBatchModal.tsx
- * STATUS: DEBUGGING MODE 🛠️
- * Fixes "Silent Failure" by removing <form> and using manual onClick
+ * components/admin/SettingsTab.tsx
+ * Purpose: Real Shopify Integration
  */
 
 import React, { useState, useEffect } from 'react';
+import { RefreshCw, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../../src/supabaseClient';
-import { RefreshCw, Upload } from 'lucide-react';
-import { Batch, SizeQty } from '../../types';
-import { SIZE_OPTIONS } from '../../constants';
-import { Modal } from '../Shared';
+import { Button, Card } from '../Shared';
 
-interface CreateBatchModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (batch: Partial<Batch>) => void;
-}
-
-export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit
-}) => {
-  // DEBUG LOG: Prove the component loaded
-  useEffect(() => {
-    if (isOpen) console.log("🟢 CreateBatchModal Rendered & Open");
-  }, [isOpen]);
-
-  const [form, setForm] = useState({
-    styleName: '',
-    sku: '',
-    ratePerPiece: 0,
-    imageUrl: '',
-    plannedQty: SIZE_OPTIONS.reduce((acc, size) => ({ ...acc, [size]: 0 }), {} as SizeQty)
+export const SettingsTab: React.FC = () => {
+  const [shopifyConfig, setShopifyConfig] = useState({
+    domain: '',
+    token: ''
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+  const [message, setMessage] = useState('');
 
-  const handleShopifySync = () => {
-    console.log("🔄 Sync Triggered");
-    const randomQty = SIZE_OPTIONS.reduce((acc, size) => {
-      if (Math.random() > 0.5) acc[size] = Math.floor(Math.random() * 50) + 10;
-      else acc[size] = 0;
-      return acc;
-    }, {} as SizeQty);
+  // Load saved settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
-    setForm({
-      styleName: 'Summer Breeze Kurti',
-      sku: `SBK-${Math.floor(Math.random() * 1000)}`,
-      ratePerPiece: 140,
-      imageUrl: `https://picsum.photos/id/${Math.floor(Math.random() * 100) + 100}/400/600`,
-      plannedQty: randomQty
-    });
+  const loadSettings = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('*')
+      .eq('key', 'shopify_config')
+      .single();
+
+    if (data?.value) {
+      setShopifyConfig(data.value);
+    }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleSave = async () => {
+    setIsSaving(true);
+    setMessage('');
 
-    console.log("📤 Uploading image...");
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `design-images/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('designs')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error("❌ Upload Failed:", uploadError);
-      alert("Upload failed: " + uploadError.message);
-      return;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('designs')
-      .getPublicUrl(filePath);
-
-    console.log("✅ Image Uploaded:", publicUrl);
-    setForm(prev => ({ ...prev, imageUrl: publicUrl }));
-  };
-
-  // ✅ MANUAL SUBMIT HANDLER
-  const handleForceSubmit = () => {
-    console.log("🚀 BUTTON CLICKED! Starting Force Submit...");
-    console.log("📦 Form Data:", form);
-
-    // 1. Simple Validation
-    if (!form.styleName || !form.sku) {
-      console.warn("⚠️ Validation Failed: Missing Name or SKU");
-      alert("Please enter Style Name and SKU");
-      return;
-    }
-    if (form.ratePerPiece <= 0) {
-      console.warn("⚠️ Validation Failed: Rate is 0");
-      alert("Rate must be greater than 0");
-      return;
-    }
-
-    // 2. Call Parent
-    console.log("✅ Validation Passed. Calling onSubmit...");
     try {
-      onSubmit(form);
-      console.log("🎉 onSubmit executed successfully.");
-    } catch (err) {
-      console.error("💥 Error in Parent onSubmit:", err);
-      alert("System Error: " + err);
-    }
+      // First check if table exists, if not just save to localStorage
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'shopify_config',
+          value: shopifyConfig
+        })
+        .select();
 
-    // 3. Close
-    onClose();
-    // Reset Form
-    setForm({
-      styleName: '',
-      sku: '',
-      ratePerPiece: 0,
-      imageUrl: '',
-      plannedQty: SIZE_OPTIONS.reduce((acc, size) => ({ ...acc, [size]: 0 }), {} as SizeQty)
-    });
+      if (error) {
+        // Fallback to localStorage if table doesn't exist
+        localStorage.setItem('shopify_config', JSON.stringify(shopifyConfig));
+      }
+
+      if (error) throw error;
+
+      setMessage('Settings saved successfully!');
+      setTestResult('success');
+    } catch (error: any) {
+      setMessage('Error saving settings: ' + error.message);
+      setTestResult('error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const testConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    setMessage('');
+
+    try {
+      // Test Shopify API connection
+      const response = await fetch(`https://${shopifyConfig.domain}/admin/api/2024-01/shop.json`, {
+        headers: {
+          'X-Shopify-Access-Token': shopifyConfig.token,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Connection failed');
+
+      const data = await response.json();
+      setTestResult('success');
+      setMessage(`Connected to: ${data.shop.name}`);
+    } catch (error: any) {
+      setTestResult('error');
+      setMessage('Connection failed. Check your domain and token.');
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create New Production Batch">
-      {/* 🛑 NO FORM TAG! Just a div. This prevents the browser from interfering. */}
-      <div className="space-y-4">
-        
-        <div className="flex justify-end">
-          <button 
-            type="button" 
-            onClick={handleShopifySync} 
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-          >
-            <RefreshCw size={14} /> Sync from Shopify
-          </button>
-        </div>
-
-        {/* INPUTS */}
+    <Card className="p-6 max-w-2xl mx-auto">
+      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 border-b pb-4">
+        <RefreshCw className="text-green-600" /> Shopify Integration Settings
+      </h3>
+      
+      <div className="space-y-6">
+        {/* Domain Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Style Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Shopify Store Domain
+          </label>
           <input 
             type="text" 
-            className="mt-1 block w-full rounded-md border-gray-300 border p-2"
-            value={form.styleName}
-            onChange={e => setForm({...form, styleName: e.target.value})}
+            placeholder="your-store.myshopify.com"
+            className="mt-1 block w-full rounded-md border-gray-300 border p-3 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            value={shopifyConfig.domain}
+            onChange={e => setShopifyConfig({...shopifyConfig, domain: e.target.value})}
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">SKU</label>
-            <input 
-              type="text" 
-              className="mt-1 block w-full rounded-md border-gray-300 border p-2"
-              value={form.sku}
-              onChange={e => setForm({...form, sku: e.target.value})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Rate (₹/pc)</label>
-            <input 
-              type="number" 
-              className="mt-1 block w-full rounded-md border-gray-300 border p-2"
-              value={form.ratePerPiece}
-              onChange={e => setForm({...form, ratePerPiece: Number(e.target.value)})}
-            />
-          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Enter your store domain (e.g., mystore.myshopify.com)
+          </p>
         </div>
         
-        {/* IMAGE UPLOAD */}
+        {/* Token Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-          <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <input 
-              type="url" 
-              placeholder="Paste Image URL..."
-              className="block w-full rounded-md border-gray-300 border p-2 text-sm"
-              value={form.imageUrl}
-              onChange={e => setForm({...form, imageUrl: e.target.value})}
-            />
-            
-            <div className="relative flex justify-center py-2">
-              <span className="bg-gray-50 px-2 text-xs text-gray-500">OR UPLOAD</span>
-            </div>
-
-            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
-              <Upload className="w-6 h-6 text-gray-400 mb-1" />
-              <p className="text-xs text-gray-500">Click to upload</p>
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-            </label>
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Admin API Access Token
+          </label>
+          <input 
+            type="password" 
+            placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx"
+            className="mt-1 block w-full rounded-md border-gray-300 border p-3 shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono"
+            value={shopifyConfig.token}
+            onChange={e => setShopifyConfig({...shopifyConfig, token: e.target.value})}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Access token from your Shopify custom app
+          </p>
         </div>
 
-        {/* SIZES */}
-        <div className="pt-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Planned Quantity</label>
-          <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
-            {SIZE_OPTIONS.map(size => (
-              <div key={size} className="flex items-center space-x-2">
-                <input 
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  className="w-20 text-center border-gray-300 rounded-md border p-1"
-                  value={form.plannedQty[size] || ''}
-                  onChange={e => setForm({
-                    ...form, 
-                    plannedQty: { ...form.plannedQty, [size]: Number(e.target.value) }
-                  })}
-                />
-                <label className="text-xs text-gray-600 truncate">{size}</label>
-              </div>
-            ))}
+        {/* Status Message */}
+        {message && (
+          <div className={`p-3 rounded-lg flex items-center gap-2 ${
+            testResult === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 
+            testResult === 'error' ? 'bg-red-50 text-red-800 border border-red-200' : 
+            'bg-blue-50 text-blue-800 border border-blue-200'
+          }`}>
+            {testResult === 'success' && <CheckCircle size={16} />}
+            {testResult === 'error' && <AlertCircle size={16} />}
+            <span className="text-sm">{message}</span>
           </div>
-        </div>
-
-        {/* ACTION BUTTONS */}
-        <div className="pt-4 flex justify-end gap-3">
-          <button 
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+        )}
+        
+        {/* Action Buttons */}
+        <div className="pt-4 flex items-center gap-4 border-t">
+          <Button 
+            onClick={testConnection} 
+            variant="outline"
+            disabled={!shopifyConfig.domain || !shopifyConfig.token || isTesting}
           >
-            Cancel
-          </button>
+            {isTesting ? 'Testing...' : 'Test Connection'}
+          </Button>
           
-          {/* ✅ TESTED BUTTON: type='button' + onClick */}
-          <button 
-            type="button" 
-            onClick={handleForceSubmit}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-bold"
+          <Button 
+            onClick={handleSave}
+            disabled={!shopifyConfig.domain || !shopifyConfig.token || isSaving}
           >
-            Create Batch
-          </button>
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </Button>
+          
+          <span className="text-xs text-gray-500 flex items-center gap-1">
+            <Settings size={12} /> Used for product sync in "New Batch"
+          </span>
         </div>
 
+        {/* Instructions */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+          <h4 className="font-medium text-gray-900 mb-2">Setup Instructions:</h4>
+          <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+            <li>Go to Shopify Admin → Apps → Develop apps</li>
+            <li>Select your custom app</li>
+            <li>Copy the Admin API access token</li>
+            <li>Paste it above and click "Test Connection"</li>
+            <li>If successful, click "Save Settings"</li>
+          </ol>
+        </div>
       </div>
-    </Modal>
+    </Card>
   );
 };
