@@ -1,6 +1,6 @@
 /**
  * services/userService.ts
- * Purpose: User management operations - Add/update/delete users, Handle transactions (credit/debit)
+ * Purpose: User management operations , - Add/update/delete users, Handle transactions (credit/debit), **Exports:** `userService` object
  */
 
 import { supabase } from '../src/supabaseClient';
@@ -34,68 +34,20 @@ export const userService = {
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
-    if (updates.displayPin) dbUpdates.display_pin = updates.displayPin;
-    if (updates.pin) dbUpdates.pin = updates.pin;
 
     const { error } = await supabase
       .from('profiles')
       .update(dbUpdates)
       .eq('id', userId);
 
-    if (error) {
-      console.error("Update failed:", error);
-      alert("Update failed: " + error.message);
-    }
+    if (error) alert("Update failed: " + error.message);
   },
 
   async deleteUser(userId: string, currentUserId: string) {
-    console.log('DELETE: deleteUser called');
-    console.log('DELETE: userId to delete:', userId);
+    if (userId === currentUserId) return;
     
-    if (userId === currentUserId) {
-      alert("Cannot delete yourself!");
-      return;
-    }
-    
-    // Step 1: Delete from profiles table
-    const { data, error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId)
-      .select();
-    
-    console.log('DELETE: Profile delete result:', { data, error });
-    
-    if (error) {
-      console.error('ERROR: Delete error:', error);
-      alert("Delete failed: " + error.message);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      console.warn('WARNING: No profile deleted');
-      alert("Delete failed: Permission denied");
-      throw new Error("No rows deleted");
-    }
-    
-    // Step 2: Delete from auth using Edge Function
-    try {
-      console.log('DELETE: Calling delete-auth-user function...');
-      const { error: authError } = await supabase.functions.invoke('delete-auth-user', {
-        body: { userId }
-      });
-      
-      if (authError) {
-        console.warn('WARNING: Auth delete failed:', authError);
-      } else {
-        console.log('SUCCESS: Auth user deleted');
-      }
-    } catch (err) {
-      console.warn('WARNING: Auth delete error:', err);
-    }
-    
-    console.log('SUCCESS: User fully deleted');
-    return data;
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) alert("Delete failed: " + error.message);
   },
 
   async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
@@ -115,9 +67,6 @@ export const userService = {
       amount: signedAmount 
     });
 
-    if (ledgerError || walletError) {
-      console.error('Transaction error:', { ledgerError, walletError });
-      alert("Transaction failed");
-    }
+    if (ledgerError || walletError) alert("Transaction failed");
   },
 };
