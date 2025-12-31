@@ -20,7 +20,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({
   staffUsers,
   getActiveAssignments,
   onAddStaff,
-  onDeleteUser
+  onDeleteUser,
   onUpdateUser
 }) => {
   return (
