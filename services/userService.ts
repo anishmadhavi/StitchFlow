@@ -78,16 +78,59 @@ export const userService = {
   },
 
   async deleteUser(userId: string, currentUserId: string) {
-     const { error } = await supabase.from('profiles').delete().eq('id', userId);
-     if (error) alert(error.message);
-     else {
-         await supabase.functions.invoke('delete-auth-user', { body: { userId } });
-         alert("Deleted!");
-         window.location.reload();
-     }
-  },
+    console.log("🗑️ deleteUser Triggered for:", userId);
 
-  async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
-    // Keep existing logic
-  }
-};
+    if (userId === currentUserId) {
+      alert("Cannot delete yourself!");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this staff member? This will remove their login access.")) return;
+
+    // 1. Delete from Database (Profiles Table)
+    const { error: dbError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (dbError) {
+      alert("Delete failed: " + dbError.message);
+      return;
+    }
+
+    // 2. Delete from Auth (Using Manual Token Fetch to avoid freezing)
+    try {
+      // Get Token Manually (Same trick as addUser)
+      const rawData = localStorage.getItem('stitchflow-v2');
+      const sessionData = rawData ? JSON.parse(rawData) : null;
+      const token = sessionData?.access_token;
+
+      if (token) {
+        console.log("📡 Calling Edge Function (Raw Fetch)...");
+        const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/delete-auth-user', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId }) // Sending the ID clearly
+        });
+
+        if (!response.ok) {
+           const errText = await response.text();
+           console.error("❌ Auth Delete Failed:", errText);
+           // We don't alert here because the profile is already gone, which is the important part for the UI.
+        } else {
+           console.log("✅ Auth Delete Success");
+        }
+      } else {
+        console.warn("⚠️ No token found, skipping Auth delete");
+      }
+    } catch (e) {
+      console.error("💥 Edge Function Call Error:", e);
+    }
+
+    // 3. Success -> Reload
+    alert("User deleted successfully.");
+    window.location.reload();
+  },
