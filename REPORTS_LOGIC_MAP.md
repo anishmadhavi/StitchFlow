@@ -40,13 +40,13 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingCuttingBatches, handleOpenQCModal, handleOpenAssignModal, pendingQCItems, activeBatches, handleOpenCutModal
+> pendingCuttingBatches, handleOpenAssignModal, pendingQCItems, activeBatches, handleOpenCutModal, handleOpenQCModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenAssignModal, handleOpenPassbook, staffUsers, handleOpenBatchDetails, getActiveAssignments, activeBatches
+> staffUsers, handleOpenBatchDetails, handleOpenAssignModal, getActiveAssignments, handleOpenPassbook, activeBatches
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
@@ -58,13 +58,13 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handlePhotoUpload, calculateTotalQty, isAdvance
+> calculateTotalQty, isAdvance, handlePhotoUpload
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenInspectModal, formatDate, pendingQCItems
+> handleOpenInspectModal, pendingQCItems, formatDate
 
 #### 📄 BatchesTab.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -130,7 +130,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleShopifySync, handleSubmit, handleImageUpload
+> handleShopifySync, handleImageUpload, handleSubmit
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -160,7 +160,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleLogout, useAuth, handleLogin, handleSignUp, loadProfile, initializeAuth
+> useAuth, loadProfile, initializeAuth, handleLogin, handleLogout, handleSignUp
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
