@@ -57,8 +57,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Filtered data
-  const activeBatches = batches.filter(b => b.status !== BatchStatus.ARCHIVED);
-  const staffUsers = users.filter(u => u.role !== Role.ADMIN);
+  const activeBatches = (batches || []).filter(b => b.status !== BatchStatus.ARCHIVED);
+  const staffUsers = (users || []).filter(u => u.role !== Role.ADMIN);
   const karigars = users.filter(u => u.role === Role.KARIGAR);
 
   // Helper
