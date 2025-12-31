@@ -93,7 +93,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
         </div>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit">Create Staff Member</Button>
+          {/* Replace custom Button with standard HTML button to force submit */}
+          <button 
+            type="submit" 
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Create Staff Member
+          </button>
         </div>
       </form>
     </Modal>
