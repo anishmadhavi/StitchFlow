@@ -43,35 +43,40 @@ export const userService = {
     if (error) alert("Update failed: " + error.message);
   },
 
-  async deleteUser(userId: string, currentUserId: string) {
-    if (userId === currentUserId) {
-      alert("Cannot delete yourself!");
-      return;
-    }
-    
-    console.log('🗑️ Attempting to delete user:', userId);
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId)
-      .select();
-    
-    console.log('🗑️ Delete result:', { data, error });
-    
-    if (error) {
-      console.error('❌ Delete error:', error);
-      alert("Delete failed: " + error.message);
-      throw error;
-    }
-    
-    if (!data || data.length === 0) {
-      alert("Delete failed: User not found or permission denied");
-      throw new Error("Delete failed");
-    }
-    
-    console.log('✅ User deleted successfully');
-  },
+async deleteUser(userId: string, currentUserId: string) {
+  console.log('🗑️ deleteUser called');
+  console.log('🗑️ userId to delete:', userId);
+  console.log('🗑️ currentUserId (admin):', currentUserId);
+  console.log('🗑️ auth.uid:', (await supabase.auth.getUser()).data.user?.id);
+  
+  if (userId === currentUserId) {
+    alert("Cannot delete yourself!");
+    return;
+  }
+  
+  const { data, error } = await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', userId)
+    .select();
+  
+  console.log('🗑️ Supabase response:', { data, error });
+  
+  if (error) {
+    console.error('❌ Delete error details:', error);
+    alert("Delete failed: " + error.message + " (Code: " + error.code + ")");
+    throw error;
+  }
+  
+  if (!data || data.length === 0) {
+    console.warn('⚠️ No rows deleted - might be RLS issue');
+    alert("Delete failed: Permission denied or user not found");
+    throw new Error("No rows deleted");
+  }
+  
+  console.log('✅ Successfully deleted:', data);
+  return data;
+},
 
   async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
     const signedAmount = type === 'CREDIT' ? amount : -amount;
