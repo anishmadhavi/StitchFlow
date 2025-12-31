@@ -59,10 +59,19 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                   </div>
                 </div>
 <button 
-  onClick={(e) => {
+  onClick={async (e) => {
     e.stopPropagation();
+    console.log('🗑️ Delete clicked for:', user.name, user.id);
     if (window.confirm(`Delete ${user.name}?`)) {
-      onDeleteUser(user.id);
+      console.log('✅ Confirmed, calling onDeleteUser');
+      try {
+        await onDeleteUser(user.id);
+        console.log('✅ Delete completed');
+        alert('Staff deleted successfully!');
+      } catch (error) {
+        console.error('❌ Delete failed:', error);
+        alert('Error deleting staff: ' + error);
+      }
     }
   }} 
   className="text-gray-400 hover:text-red-600 transition-colors p-1"
