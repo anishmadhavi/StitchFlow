@@ -16,7 +16,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> App
+> directly, App
 
 #### 📄 batchService.ts
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -40,31 +40,31 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingCuttingBatches, activeBatches, handleOpenCutModal, handleOpenQCModal, handleOpenAssignModal, pendingQCItems
+> handleOpenCutModal, handleOpenAssignModal, pendingQCItems, handleOpenQCModal, pendingCuttingBatches, activeBatches
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenPassbook, activeBatches, staffUsers, handleOpenBatchDetails, handleOpenAssignModal, getActiveAssignments
+> handleOpenAssignModal, staffUsers, handleOpenPassbook, handleOpenBatchDetails, activeBatches, getActiveAssignments
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingBatches, handleOpenCutModal, handleOpenAssignModal, assignableBatches, calculateTotalAvailable
+> handleOpenCutModal, pendingBatches, handleOpenAssignModal, calculateTotalAvailable, assignableBatches
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> isAdvance, handlePhotoUpload, calculateTotalQty
+> calculateTotalQty, handlePhotoUpload, isAdvance
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> formatDate, handleOpenInspectModal, pendingQCItems
+> pendingQCItems, handleOpenInspectModal, formatDate
 
 #### 📄 BatchesTab.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -76,7 +76,7 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> handleSave, loadSettings, testConnection
+> testConnection, handleSave, loadSettings
 
 #### 📄 PassbookModal.tsx
 **Purpose:** General Component/Utility
@@ -160,7 +160,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleSignUp, initializeAuth, handleLogin, loadProfile, useAuth, handleLogout
+> handleLogin, loadProfile, initializeAuth, handleSignUp, handleLogout, useAuth
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
