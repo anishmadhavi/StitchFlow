@@ -95,20 +95,12 @@ export default function App() {
             onPayKarigar={userService.handleTransaction}
             onArchiveBatch={batchService.handleArchive}
             
-            // ✅ CORRECT FIX: Add 'async' and 'await'
-            onAddUser={async (name, role, mobile, pin) => {
-              // 1. Wait for the database to finish
-              await userService.addUser(name, role, mobile, pin);
-              // 2. ONLY THEN refresh the page
-              window.location.reload();
-            }}
-
-            // ✅ Apply the same fix for Deleting
-            onDeleteUser={async (userId) => {
-              await userService.deleteUser(userId, currentUser.id);
-              window.location.reload();
-            }}
-
+            // ✅ SIMPLIFIED: Just pass the function directly
+            onAddUser={userService.addUser}
+            
+            // ✅ SIMPLIFIED: Just pass the function directly
+            onDeleteUser={(userId) => userService.deleteUser(userId, currentUser.id)}
+            
             onUpdateUser={userService.updateUser}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
           />
