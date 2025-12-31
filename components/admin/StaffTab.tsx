@@ -13,6 +13,7 @@ interface StaffTabProps {
   getActiveAssignments: (userId: string) => Assignment[];
   onAddStaff: () => void;
   onDeleteUser: (userId: string) => void;
+  onUpdateUser?: (userId: string, updates: Partial<User>) => void;
 }
 
 export const StaffTab: React.FC<StaffTabProps> = ({
@@ -20,6 +21,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({
   getActiveAssignments,
   onAddStaff,
   onDeleteUser
+  onUpdateUser
 }) => {
   return (
     <div className="space-y-6">
@@ -86,14 +88,10 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                     className="font-mono bg-yellow-100 px-2 py-1 rounded border border-yellow-300 focus:border-yellow-500 focus:outline-none w-20 text-center"
                     defaultValue={user.displayPin || user.pin || ''}
                     placeholder="123456"
-                    onBlur={(e) => {
+                   onBlur={(e) => {
                       const newPin = e.target.value;
-                      if (newPin && newPin.length === 6) {
-                        // Update PIN in database
-                        fetch('/api/update-pin', {
-                          method: 'POST',
-                          body: JSON.stringify({ userId: user.id, pin: newPin })
-                        });
+                      if (newPin && newPin.length === 6 && onUpdateUser) {
+                        onUpdateUser(user.id, { displayPin: newPin, pin: newPin });
                       }
                     }}
                   />
