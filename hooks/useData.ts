@@ -49,15 +49,44 @@ export function useData(currentUser: User | null) {
 
     fetchData();
 
-    // Setup Real-time Subscription
-    const channel = supabase.channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public' }, fetchData)
+        // Setup Real-time Subscription for Profiles
+    const profilesChannel = supabase
+      .channel('profiles-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'profiles' }, 
+        (payload) => {
+          console.log('🔄 Profile changed:', payload);
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Setup Real-time Subscription for Batches
+    const batchesChannel = supabase
+      .channel('batches-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'batches' }, 
+        (payload) => {
+          console.log('🔄 Batch changed:', payload);
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Setup Real-time Subscription for Assignments
+    const assignmentsChannel = supabase
+      .channel('assignments-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'assignments' }, 
+        (payload) => {
+          console.log('🔄 Assignment changed:', payload);
+          fetchData();
+        }
+      )
       .subscribe();
 
     return () => { 
-      supabase.removeChannel(channel).catch(err => console.error('Channel cleanup error:', err));
+      supabase.removeChannel(profilesChannel).catch(err => console.error('Channel cleanup error:', err));
+      supabase.removeChannel(batchesChannel).catch(err => console.error('Channel cleanup error:', err));
+      supabase.removeChannel(assignmentsChannel).catch(err => console.error('Channel cleanup error:', err));
     };
-  }, [currentUser]);
-
-  return { users, batches, dataLoading };
-}
