@@ -34,8 +34,8 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
   const [viewImg, setViewImg] = useState<string | null>(null);
 
   // Filtered batches
-  const pendingBatches = batches.filter(b => b.status === BatchStatus.PENDING_MATERIAL);
-  const assignableBatches = batches.filter(b => 
+  const pendingBatches = (batches || []).filter(b => b.status === BatchStatus.PENDING_MATERIAL);
+ const assignableBatches = (batches || []).filter(b => 
     b.status === BatchStatus.CUTTING_DONE || b.status === BatchStatus.IN_PRODUCTION
   );
 
