@@ -47,8 +47,8 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   const [selectedQCItem, setSelectedQCItem] = useState<any>(null);
 
   // Filtered data
-  const activeBatches = batches.filter(b => b.status !== BatchStatus.ARCHIVED);
-  const pendingCuttingBatches = batches.filter(b => 
+  const activeBatches = (batches || []).filter(b => b.status !== BatchStatus.ARCHIVED);
+  const pendingCuttingBatches = (batches || []).filter(b =>
     b.status === BatchStatus.PENDING_MATERIAL || b.status === 'Pending Material'
   );
   const assignableBatches = batches.filter(b => 
