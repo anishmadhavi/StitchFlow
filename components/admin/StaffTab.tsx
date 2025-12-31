@@ -56,17 +56,17 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                     </Badge>
                   </div>
                 </div>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Delete ${user.name}?`)) {
-                      onDeleteUser(user.id);
-                    }
-                  }} 
-                  className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                >
-                  <Trash2 size={16} />
-                </button>
+<button 
+  onClick={(e) => {
+    e.stopPropagation();
+    if (window.confirm(`Delete ${user.name}?`)) {
+      onDeleteUser(user.id);
+    }
+  }} 
+  className="text-gray-400 hover:text-red-600 transition-colors p-1"
+>
+  <Trash2 size={16} />
+</button>
               </div>
 
               {/* Login Credentials - PASSWORD VISIBLE */}
