@@ -54,9 +54,9 @@ export const BatchDetailsModal: React.FC<BatchDetailsModalProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-center">
               <thead>
-                <tr className="text-gray-500 border-b">
-                  <th className="px-2 py-1 text-left">Size</th>
-                  {Object.keys(batch.plannedQty).map(s => (
+<tr className="text-gray-500 border-b">
+  <th className="px-2 py-1 text-left">Size</th>
+  {Object.keys(batch.plannedQty || {}).map(s => (
                     <th key={s} className="px-2 py-1 min-w-[40px]">
                       {s.split(' - ')[0]}
                     </th>
@@ -65,8 +65,8 @@ export const BatchDetailsModal: React.FC<BatchDetailsModalProps> = ({
               </thead>
               <tbody className="divide-y">
                 <tr>
-                  <td className="text-left font-medium py-2">Planned</td>
-                  {Object.keys(batch.plannedQty).map(s => (
+  <td className="text-left font-medium py-2">Planned</td>
+  {Object.keys(batch.plannedQty || {}).map(s => (
                     <td key={s} className="py-2 text-gray-600">
                       {batch.plannedQty[s]}
                     </td>
@@ -129,9 +129,9 @@ export const BatchDetailsModal: React.FC<BatchDetailsModalProps> = ({
           </h4>
           <div className="space-y-3 max-h-[30vh] overflow-y-auto">
             {(!batch.assignments || batch.assignments.length === 0) && (
-              <p className="text-sm text-gray-500 italic">No assignments made yet.</p>
-            )}
-            {batch.assignments?.map(a => {
+  <p className="text-sm text-gray-500 italic">No assignments made yet.</p>
+)}
+{batch.assignments?.map(a => {
               const totalPcs = Object.values(a.assignedQty).reduce(
                 (x: number, y: number) => x + y, 0
               );
