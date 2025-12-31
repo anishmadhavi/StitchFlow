@@ -73,10 +73,10 @@ export const BatchDetailsModal: React.FC<BatchDetailsModalProps> = ({
                   ))}
                 </tr>
                 <tr>
-                  <td className="text-left font-medium py-2">Actual Cut</td>
-                  {Object.keys(batch.plannedQty).map(s => {
-                    const planned = batch.plannedQty[s] || 0;
-                    const cut = batch.actualCutQty?.[s] || 0;
+  <td className="text-left font-medium py-2">Actual Cut</td>
+  {Object.keys(batch.plannedQty || {}).map(s => {
+    const planned = (batch.plannedQty || {})[s] || 0;
+    const cut = (batch.actualCutQty || {})[s] || 0;
                     const diff = cut - planned;
                     const color = diff < 0 ? 'text-red-600' : 
                                   diff > 0 ? 'text-green-600' : 'text-gray-900';
