@@ -46,19 +46,19 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingCuttingBatches, pendingQCItems, handleOpenCutModal, handleOpenAssignModal, activeBatches, handleOpenQCModal
+> handleOpenCutModal, activeBatches, pendingCuttingBatches, handleOpenQCModal, pendingQCItems, handleOpenAssignModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenBatchDetails, getActiveAssignments, handleOpenPassbook, handleOpenAssignModal, activeBatches, staffUsers
+> activeBatches, handleOpenPassbook, staffUsers, handleOpenBatchDetails, handleOpenAssignModal, getActiveAssignments
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingBatches, assignableBatches, handleOpenCutModal, handleOpenAssignModal, calculateTotalAvailable
+> assignableBatches, pendingBatches, handleOpenCutModal, calculateTotalAvailable, handleOpenAssignModal
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
@@ -70,7 +70,7 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingQCItems, formatDate, handleOpenInspectModal
+> pendingQCItems, handleOpenInspectModal, formatDate
 
 #### 📄 BatchesTab.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -136,7 +136,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleImageUpload, handleSubmit, handleShopifySync
+> handleShopifySync, handleImageUpload, handleSubmit
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -148,7 +148,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleSubmit, handleQtyChange
+> handleQtyChange, handleSubmit
 
 #### 📄 AssignToKarigarModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -160,13 +160,13 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> fetchData, useData
+> useData, fetchData
 
 #### 📄 useAuth.ts
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> useAuth, handleSignUp, loadProfile, handleLogin, handleLogout, initializeAuth
+> loadProfile, useAuth, initializeAuth, handleLogin, handleLogout, handleSignUp
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
