@@ -40,7 +40,7 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenCutModal, handleOpenAssignModal, handleOpenQCModal
+> handleOpenCutModal, handleOpenQCModal, handleOpenAssignModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
@@ -52,19 +52,19 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenCutModal, handleOpenAssignModal, calculateTotalAvailable
+> handleOpenCutModal, calculateTotalAvailable, handleOpenAssignModal
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> isAdvance, calculateTotalQty, handlePhotoUpload
+> isAdvance, handlePhotoUpload, calculateTotalQty
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenInspectModal, formatDate
+> formatDate, handleOpenInspectModal
 
 #### 📄 BatchesTab.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -130,7 +130,7 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleImageUpload, handleSubmit, handleShopifySync
+> handleImageUpload, handleShopifySync, handleSubmit
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -154,13 +154,13 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> fetchData, useData
+> useData, fetchData
 
 #### 📄 useAuth.ts
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleSignUp, loadProfile, useAuth, initializeAuth, handleLogin, handleLogout
+> handleSignUp, useAuth, handleLogin, initializeAuth, loadProfile, handleLogout
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
