@@ -16,7 +16,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> App, directly
+> directly, App
 
 #### 📄 batchService.ts
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -46,19 +46,19 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingQCItems, handleOpenQCModal, handleOpenAssignModal, activeBatches, pendingCuttingBatches, handleOpenCutModal
+> pendingCuttingBatches, handleOpenCutModal, activeBatches, handleOpenQCModal, pendingQCItems, handleOpenAssignModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> getActiveAssignments, handleOpenAssignModal, handleOpenPassbook, staffUsers, activeBatches, handleOpenBatchDetails
+> handleOpenPassbook, activeBatches, getActiveAssignments, handleOpenBatchDetails, handleOpenAssignModal, staffUsers
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenAssignModal, calculateTotalAvailable, assignableBatches, pendingBatches, handleOpenCutModal
+> handleOpenCutModal, assignableBatches, pendingBatches, handleOpenAssignModal, calculateTotalAvailable
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
@@ -82,7 +82,7 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> handleSave, loadSettings, testConnection
+> testConnection, loadSettings, handleSave
 
 #### 📄 PassbookModal.tsx
 **Purpose:** General Component/Utility
@@ -103,10 +103,10 @@
 > planned, cut
 
 #### 📄 CreateUserModal.tsx
-**Purpose:** Production logic for garment manufacturing and assignment.
+**Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleImageUpload, handleForceSubmit, handleShopifySync
+> called, handleForceSubmit
 
 #### 📄 StaffTab.tsx
 **Purpose:** Handles user authentication and security flows.
@@ -160,13 +160,13 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> fetchData, useData
+> useData, fetchData
 
 #### 📄 useAuth.ts
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleSignUp, loadProfile, initializeAuth, handleLogout, useAuth, handleLogin
+> loadProfile, handleLogin, handleLogout, handleSignUp, useAuth, initializeAuth
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
