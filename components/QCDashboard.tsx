@@ -21,7 +21,7 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ batches, onSubmitQC })
   const [selectedQCItem, setSelectedQCItem] = useState<any>(null);
 
   // Filter for items ready for QC
-  const pendingQCItems = batches.flatMap(b => 
+    const pendingQCItems = (batches || []).flatMap(b => 
     b.assignments
       .filter(a => a.status === AssignmentStatus.STITCHED)
       .map(a => ({ ...a, batch: b }))
