@@ -51,7 +51,13 @@ export const batchService = {
       })
       .eq('id', batchId);
 
-    if (error) alert("Error finalizing cut: " + error.message);
+    if (error) {
+      alert("Error finalizing cut: " + error.message);
+    } else {
+      // ✅ ALTERNATIVE FIX: Just reload the page
+      console.log("✅ Cut Finalized. Reloading...");
+      window.location.reload(); 
+    }
   },
 
   async assignToKarigar(batchId: string, karigarId: string, qty: SizeQty, batches: Batch[], users: User[]) {
