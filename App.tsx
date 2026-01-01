@@ -1,7 +1,6 @@
 /**
- * App.tsx (Refactored)
- * Purpose: Main Application Component -,  Clean routing logic only, Uses hooks for state, Uses services for operations
- * Description: Role-based routing with separated concerns
+ * App.tsx
+ * STATUS: FIXED (Added Force Logout Logic) 🛠️
  */
 
 import React from 'react';
@@ -21,11 +20,27 @@ import { LayoutDashboard, LogOut } from 'lucide-react';
 
 export default function App() {
   console.log('🚀 App component mounting...');
-  console.log('📦 localStorage stitchflow-v2:', localStorage.getItem('stitchflow-v2') ? 'EXISTS' : 'MISSING');
-
-  // Custom hooks handle all the heavy lifting
+  
+  // Custom hooks
   const { currentUser, authLoading, authError, handleLogin, handleSignUp, handleLogout } = useAuth();
   const { users, batches, dataLoading } = useData(currentUser);
+
+  // ✅ FORCE LOGOUT HANDLER
+  // This ensures the user is logged out even if the library hangs
+  const handleForceLogout = async () => {
+    console.log("👋 Logout Triggered");
+    
+    // 1. Attempt standard logout
+    try {
+      await handleLogout();
+    } catch (err) {
+      console.error("Standard logout failed, forcing exit...", err);
+    }
+
+    // 2. Force Clean & Reload (The Nuclear Option)
+    localStorage.removeItem('stitchflow-v2'); // Remove token
+    window.location.href = '/'; // Hard Refresh to Login page
+  };
 
   // Show login screen if not authenticated
   if (!currentUser) {
@@ -75,9 +90,12 @@ export default function App() {
                 <p className="text-xs text-gray-500 uppercase">{currentUser.role}</p>
               </div>
             </div>
+            
+            {/* ✅ UPDATED LOGOUT BUTTON */}
             <button 
-              onClick={handleLogout} 
-              className="text-gray-400 hover:text-red-600 p-2"
+              onClick={handleForceLogout} 
+              className="text-gray-400 hover:text-red-600 p-2 transition-colors"
+              title="Logout"
             >
               <LogOut size={20} />
             </button>
@@ -94,13 +112,8 @@ export default function App() {
             onCreateBatch={batchService.createBatch}
             onPayKarigar={userService.handleTransaction}
             onArchiveBatch={batchService.handleArchive}
-            
-            // ✅ SIMPLIFIED: Just pass the function directly
             onAddUser={userService.addUser}
-            
-            // ✅ SIMPLIFIED: Just pass the function directly
             onDeleteUser={(userId) => userService.deleteUser(userId, currentUser.id)}
-            
             onUpdateUser={userService.updateUser}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
           />
