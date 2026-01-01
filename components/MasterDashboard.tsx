@@ -6,9 +6,9 @@
 import React, { useState } from 'react';
 import { Scissors, UserPlus, ZoomIn, X } from 'lucide-react';
 import { Batch, BatchStatus, User, SizeQty } from '../types';
-import { Button, Card, Badge } from './Shared';
+import { Card, Badge } from './Shared'; // We will use standard HTML buttons for specific colors
 
-// Shared Modal Components (Used by multiple roles)
+// Shared Modal Components
 import { CuttingModal } from './shared/CuttingModal';
 import { AssignToKarigarModal } from './shared/AssignToKarigarModal';
 
@@ -25,21 +25,16 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
   onFinalizeCut,
   onAssignToKarigar
 }) => {
-  // Modal states
   const [cutModalOpen, setCutModalOpen] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
-  
-  // Image Viewer State
   const [viewImg, setViewImg] = useState<string | null>(null);
 
-  // Filtered batches
   const pendingBatches = (batches || []).filter(b => b.status === BatchStatus.PENDING_MATERIAL);
- const assignableBatches = (batches || []).filter(b => 
+  const assignableBatches = (batches || []).filter(b => 
     b.status === BatchStatus.CUTTING_DONE || b.status === BatchStatus.IN_PRODUCTION
   );
 
-  // Handlers
   const handleOpenCutModal = (batch: Batch) => {
     setSelectedBatch(batch);
     setCutModalOpen(true);
@@ -51,114 +46,135 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
   };
 
   const calculateTotalAvailable = (availableQty: SizeQty) => {
-    return Object.values(availableQty).reduce((sum, val) => sum + (val as number), 0);
+    return Object.values(availableQty || {}).reduce((sum, val) => sum + (val as number), 0);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 max-w-xl mx-auto pb-20">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Scissors className="text-indigo-600 w-8 h-8" />
+      <div className="flex items-center gap-3 px-2">
+        <div className="bg-indigo-100 p-3 rounded-full">
+          <Scissors className="text-indigo-600 w-6 h-6" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Master Dashboard</h1>
-          <p className="text-gray-500">Cutting room management and floor allocation</p>
+          <h1 className="text-2xl font-black text-gray-900">Master Dashboard</h1>
+          <p className="text-sm text-gray-500">Track and allocate production</p>
         </div>
       </div>
 
-      {/* Pending Cutting Section */}
+      {/* 1. PENDING CUTTING SECTION */}
       <section>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Scissors size={18} /> Pending Cutting
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 px-2 uppercase tracking-wider">
+          <Scissors size={18} className="text-green-600" /> 1. New Jobs (Pending Cut)
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-6">
           {pendingBatches.length === 0 && (
-            <p className="text-sm text-gray-500 col-span-full">No batches pending cutting.</p>
+            <p className="text-sm text-gray-400 italic text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed">
+              No batches pending cutting.
+            </p>
           )}
           {pendingBatches.map(batch => (
-            <Card key={batch.id} className="p-4 border-l-4 border-l-indigo-500">
-              <div className="flex gap-4">
-                <div className="relative shrink-0">
-                  <img 
-                    src={batch.imageUrl} 
-                    className="w-20 h-20 rounded object-cover bg-gray-100 cursor-pointer hover:opacity-75 transition-opacity" 
-                    alt=""
-                    onClick={() => setViewImg(batch.imageUrl)}
-                  />
-                  <button 
-                    onClick={() => setViewImg(batch.imageUrl)}
-                    className="absolute top-1 right-1 bg-white/90 rounded-full p-1 shadow-sm hover:bg-white"
-                  >
-                    <ZoomIn size={12} className="text-gray-600" />
-                  </button>
+            <Card key={batch.id} className="overflow-hidden border-0 shadow-xl rounded-2xl bg-white">
+              {/* Image Section (70% Look) */}
+              <div className="relative aspect-[4/5] w-full">
+                <img 
+                  src={batch.imageUrl} 
+                  className="absolute inset-0 w-full h-full object-cover cursor-pointer" 
+                  alt={batch.styleName}
+                  onClick={() => setViewImg(batch.imageUrl)}
+                />
+                <button 
+                  onClick={() => setViewImg(batch.imageUrl)}
+                  className="absolute bottom-4 right-4 bg-white/90 backdrop-blur rounded-full p-3 shadow-lg"
+                >
+                  <ZoomIn size={20} className="text-gray-800" />
+                </button>
+              </div>
+
+              {/* Info Section */}
+              <div className="p-6 space-y-4">
+                <h4 className="text-2xl font-black text-gray-900">{batch.styleName}</h4>
+                
+                {/* Stats Table */}
+                <div className="flex flex-wrap gap-2 py-2">
+                  {Object.entries(batch.plannedQty || {})
+                    .filter(([_, q]) => (q as number) > 0)
+                    .map(([k, v]) => (
+                      <span key={k} className="bg-gray-100 px-3 py-1 rounded-lg text-sm font-bold text-gray-700 border">
+                        {k}: {v as number}
+                      </span>
+                    ))}
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-gray-900">{batch.styleName}</h4>
-                  <p className="text-xs text-gray-500 mb-2">SKU: {batch.sku}</p>
-                  <div className="flex flex-wrap gap-1 text-xs font-mono bg-gray-50 p-2 rounded mb-2">
-                    {Object.entries(batch.plannedQty)
-                      .filter(([_, q]) => (q as number) > 0)
-                      .map(([k, v]) => (
-                        <span key={k} className="border px-1 bg-white rounded">
-                          {k}: {v as number}
-                        </span>
-                      ))}
-                  </div>
-                  <Button size="sm" onClick={() => handleOpenCutModal(batch)}>
-                    Finalize Cut
-                  </Button>
-                </div>
+
+                {/* ✅ FINALIZE BUTTON (GREEN) */}
+                <button 
+                  onClick={() => handleOpenCutModal(batch)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl text-lg shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest"
+                >
+                  <Scissors size={20} /> Finalize Cutting
+                </button>
               </div>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* Allocate to Karigar Section */}
+      {/* 2. ALLOCATE TO KARIGAR SECTION */}
       <section>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <UserPlus size={18} /> Allocate to Karigar
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 px-2 uppercase tracking-wider">
+          <UserPlus size={18} className="text-blue-600" /> 2. Allocate to Karigar
         </h3>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-6">
           {assignableBatches.length === 0 && (
-            <p className="text-sm text-gray-500">No stock available for assignment.</p>
+            <p className="text-sm text-gray-400 italic text-center py-10 bg-gray-50 rounded-xl border-2 border-dashed">
+              No stock available for assignment.
+            </p>
           )}
           {assignableBatches.map(batch => {
             const totalAvailable = calculateTotalAvailable(batch.availableQty || {});
             if (totalAvailable <= 0) return null;
 
             return (
-              <Card key={batch.id} className="p-4 flex flex-col md:flex-row items-start md:items-center gap-4">
-                <div className="relative shrink-0">
+              <Card key={batch.id} className="overflow-hidden border-0 shadow-xl rounded-2xl bg-white">
+                {/* Image Section */}
+                <div className="relative aspect-[4/5] w-full">
                   <img 
                     src={batch.imageUrl} 
-                    className="w-16 h-16 rounded object-cover bg-gray-100 cursor-pointer hover:opacity-75 transition-opacity" 
-                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover cursor-pointer" 
+                    alt={batch.styleName}
                     onClick={() => setViewImg(batch.imageUrl)}
                   />
-                  <button 
-                    onClick={() => setViewImg(batch.imageUrl)}
-                    className="absolute -top-1 -right-1 bg-white/90 rounded-full p-1 shadow-sm hover:bg-white"
-                  >
-                    <ZoomIn size={10} className="text-gray-600" />
-                  </button>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">{batch.styleName}</h4>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge color="blue">{batch.status}</Badge>
-                    <span className="text-xs text-gray-500">Available: {totalAvailable} pcs</span>
+                  <div className="absolute top-4 left-4">
+                    <Badge color="blue" className="px-4 py-1 text-xs uppercase font-black shadow-lg">
+                      {batch.status}
+                    </Badge>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => handleOpenAssignModal(batch)}>
-                  Assign
-                </Button>
+
+                {/* Info Section */}
+                <div className="p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-2xl font-black text-gray-900">{batch.styleName}</h4>
+                    <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-black border border-blue-100 uppercase">
+                      Ready: {totalAvailable} Pcs
+                    </span>
+                  </div>
+
+                  {/* ✅ ASSIGN BUTTON (BLUE) */}
+                  <button 
+                    onClick={() => handleOpenAssignModal(batch)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-lg shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest"
+                  >
+                    <UserPlus size={20} /> Assign Stock
+                  </button>
+                </div>
               </Card>
             );
           })}
         </div>
       </section>
 
-      {/* Modals - Using Shared Components */}
+      {/* MODALS */}
       {selectedBatch && (
         <>
           <CuttingModal
@@ -167,7 +183,6 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
             batch={selectedBatch}
             onSubmit={onFinalizeCut}
           />
-
           <AssignToKarigarModal
             isOpen={assignModalOpen}
             onClose={() => setAssignModalOpen(false)}
@@ -178,26 +193,11 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
         </>
       )}
 
-      {/* Image Viewer Modal */}
+      {/* Image Viewer */}
       {viewImg && (
-        <div 
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewImg(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh]">
-            <button 
-              onClick={() => setViewImg(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
-            >
-              <X size={32} />
-            </button>
-            <img 
-              src={viewImg} 
-              alt="Design" 
-              className="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
-              onClick={e => e.stopPropagation()}
-            />
-          </div>
+        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4" onClick={() => setViewImg(null)}>
+          <button className="absolute top-6 right-6 text-white"><X size={40} /></button>
+          <img src={viewImg} alt="View" className="max-w-full max-h-[85vh] rounded-xl shadow-2xl" onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>
