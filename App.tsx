@@ -1,7 +1,6 @@
 /**
- * App.tsx (Refactored)
- * Purpose: Main Application Component -,  Clean routing logic only, Uses hooks for state, Uses services for operations
- * Description: Role-based routing with separated concerns
+ * App.tsx
+ * STATUS: FIXED (Instant Force Logout) 🛠️
  */
 
 import React from 'react';
@@ -26,21 +25,26 @@ export default function App() {
   const { currentUser, authLoading, authError, handleLogin, handleSignUp, handleLogout } = useAuth();
   const { users, batches, dataLoading } = useData(currentUser);
 
-  // ✅ FORCE LOGOUT HANDLER
-  // This ensures the user is logged out even if the library hangs
-  const handleForceLogout = async () => {
-    console.log("👋 Logout Triggered");
+  // ✅ INSTANT FORCE LOGOUT (No Waiting)
+  const handleForceLogout = () => {
+    console.log("👋 Logout Triggered - FORCE MODE");
     
-    // 1. Attempt standard logout
+    // 1. Clear Local Data IMMEDIATELY
+    // We do not wait for the server. We just delete the keys.
+    localStorage.removeItem('stitchflow-v2');
+    localStorage.removeItem('sb-access-token'); // Clear Supabase defaults if any
+    localStorage.clear(); // Nuclear option: Clear everything
+
+    // 2. Fire Supabase logout in background (Don't wait/await for it!)
+    // This tells the server "I'm leaving", but we don't care about the reply.
     try {
-      await handleLogout();
-    } catch (err) {
-      console.error("Standard logout failed, forcing exit...", err);
+      handleLogout().catch(err => console.warn("Background logout error:", err));
+    } catch (e) {
+      console.warn("Logout trigger failed", e);
     }
 
-    // 2. Force Clean & Reload (The Nuclear Option)
-    localStorage.removeItem('stitchflow-v2'); // Remove token
-    window.location.href = '/'; // Hard Refresh to Login page
+    // 3. Force Hard Reload to Login Page
+    window.location.href = '/'; 
   };
 
   // Show login screen if not authenticated
@@ -92,7 +96,7 @@ export default function App() {
               </div>
             </div>
             
-            {/* ✅ UPDATED LOGOUT BUTTON */}
+            {/* ✅ INSTANT LOGOUT BUTTON */}
             <button 
               onClick={handleForceLogout} 
               className="text-gray-400 hover:text-red-600 p-2 transition-colors"
