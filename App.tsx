@@ -23,7 +23,10 @@ export default function App() {
   
   // Custom hooks
   const { currentUser, authLoading, authError, handleLogin, handleSignUp, handleLogout } = useAuth();
-  const { users, batches, dataLoading } = useData(currentUser);
+  cconst { users, batches, dataLoading } = useData(currentUser);
+
+// ✅ FIND MAPPED USER: This gets the version with updated Wallet & Ledger
+const mappedUser = users.find(u => u.id === currentUser?.id) || currentUser;
 
   // ✅ INSTANT FORCE LOGOUT (No Waiting)
   const handleForceLogout = () => {
@@ -146,7 +149,7 @@ export default function App() {
 
         {currentUser.role === Role.KARIGAR && (
           <KarigarDashboard 
-            currentUser={currentUser}
+            currentUser={mappedUser as User}
             batches={batches}
             onAcceptAssignment={(_, aId) => assignmentService.updateAssignmentStatus(aId, AssignmentStatus.ACCEPTED)}
             onRejectAssignment={(_, aId) => assignmentService.updateAssignmentStatus(aId, AssignmentStatus.REJECTED)}
