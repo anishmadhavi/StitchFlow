@@ -1,14 +1,11 @@
 /**
- * components/QCDashboard.tsx (Updated with Shared Components)
- * Purpose: Quality Control Interface - Uses shared QC modal
+ * components/QCDashboard.tsx
+ * STATUS: UI REDESIGN (Vertical Staff Cards) ✅
  */
-
 import React, { useState } from 'react';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, Search, User, Package } from 'lucide-react';
 import { Batch, AssignmentStatus, SizeQty } from '../types';
-import { Button, Card } from './Shared';
-
-// Shared Modal Component
+import { Card } from './Shared';
 import { QCInspectionModal } from './shared/QCInspectionModal';
 
 interface QCDashboardProps {
@@ -20,9 +17,8 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ batches, onSubmitQC })
   const [qcModalOpen, setQCModalOpen] = useState(false);
   const [selectedQCItem, setSelectedQCItem] = useState<any>(null);
 
-  // Filter for items ready for QC
-    const pendingQCItems = (batches || []).flatMap(b => 
-    b.assignments
+  const pendingQCItems = (batches || []).flatMap(b => 
+    (b.assignments || [])
       .filter(a => a.status === AssignmentStatus.STITCHED)
       .map(a => ({ ...a, batch: b }))
   );
@@ -33,63 +29,72 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ batches, onSubmitQC })
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-xl mx-auto pb-20">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <ClipboardCheck className="text-purple-600 w-8 h-8" />
+      <div className="flex items-center gap-3 px-2">
+        <div className="bg-purple-100 p-3 rounded-full">
+          <ClipboardCheck className="text-purple-600 w-6 h-6" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quality Control</h1>
-          <p className="text-gray-500">Inspect stitched garments before payout.</p>
+          <h1 className="text-2xl font-black text-gray-900">Quality Control</h1>
+          <p className="text-sm text-gray-500">Inspect and approve finished work</p>
         </div>
       </div>
 
       {/* QC Items Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-6">
         {pendingQCItems.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500">No bundles pending inspection.</p>
+          <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+            <Package className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-500 font-medium">No items waiting for QC</p>
           </div>
         )}
         
         {pendingQCItems.map(item => (
-          <Card key={item.id} className="flex gap-4 p-4 border-l-4 border-l-purple-500">
-            <img 
-              src={item.batch.imageUrl} 
-              className="w-24 h-24 rounded object-cover bg-gray-100" 
-              alt="" 
-            />
-            <div className="flex-1">
-              <div className="flex justify-between">
-                <h3 className="font-bold text-gray-900">{item.batch.styleName}</h3>
-                <span className="text-xs text-gray-500">
-                  {item.completedAt ? formatDate(item.completedAt) : ''}
-                </span>
+          <Card key={item.id} className="overflow-hidden border-0 shadow-xl rounded-2xl bg-white">
+            {/* LARGE PRODUCT IMAGE */}
+            <div className="relative aspect-[4/5] w-full">
+              <img 
+                src={item.batch.imageUrl} 
+                className="absolute inset-0 w-full h-full object-cover" 
+                alt="" 
+              />
+              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full shadow-sm flex items-center gap-1 border">
+                <User size={12} className="text-purple-600" />
+                <span className="text-xs font-black text-gray-800 uppercase">{item.karigarName}</span>
               </div>
-              <p className="text-sm text-gray-600 mb-2">Karigar: {item.karigarName}</p>
-              
-              <div className="flex flex-wrap gap-2 text-xs font-mono bg-gray-50 p-2 rounded mb-3">
+            </div>
+
+            {/* INFO SECTION */}
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <h4 className="text-2xl font-black text-gray-900">{item.batch.styleName}</h4>
+              </div>
+
+              {/* BUNDLE SUMMARY */}
+              <div className="flex flex-wrap gap-2">
                 {Object.entries(item.assignedQty)
                   .filter(([_, v]) => (v as number) > 0)
-                  .map(([k, v]) => (
-                    <span key={k} className="border px-1 bg-white rounded">
-                      {k}: {v as number}
+                  .map(([size, qty]) => (
+                    <span key={size} className="bg-gray-100 px-3 py-1 rounded-lg text-sm font-bold text-gray-700 border">
+                      {size}: {qty as number}
                     </span>
                   ))}
               </div>
               
-              <Button 
-                size="sm" 
-                onClick={() => handleOpenInspectModal(item)} 
-                className="w-full bg-purple-600 hover:bg-purple-700"
+              {/* INSPECTION BUTTON */}
+              <button 
+                onClick={() => handleOpenInspectModal(item)}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 rounded-xl text-lg shadow-lg shadow-purple-200 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest"
               >
-                Start Inspection
-              </Button>
+                <Search size={20} /> Start Inspection
+              </button>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* QC Inspection Modal - Using Shared Component */}
+      {/* QC Inspection Modal */}
       {selectedQCItem && (
         <QCInspectionModal
           isOpen={qcModalOpen}
@@ -101,8 +106,3 @@ export const QCDashboard: React.FC<QCDashboardProps> = ({ batches, onSubmitQC })
     </div>
   );
 };
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString();
-}
