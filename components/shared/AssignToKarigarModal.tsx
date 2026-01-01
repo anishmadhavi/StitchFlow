@@ -1,11 +1,11 @@
 /**
  * components/shared/AssignToKarigarModal.tsx
- * STATUS: UPDATED with Multi-Step Vertical Card Flow ✅
+ * STATUS: UPDATED with Increased Font Sizes & Cleaned UI ✅
  */
 
 import React, { useState } from 'react';
 import { Batch, User, SizeQty } from '../../types';
-import { Button, Modal } from '../Shared';
+import { Modal } from '../Shared';
 import { UserPlus, ChevronLeft, User as UserIcon } from 'lucide-react';
 
 interface AssignToKarigarModalProps {
@@ -41,7 +41,6 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
     if (selectedKarigar) {
       onSubmit(batch.id, selectedKarigar.id, formQty);
       onClose();
-      // Reset state for next use
       setStep(1);
       setSelectedKarigar(null);
       setFormQty({});
@@ -56,13 +55,13 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
       isOpen={isOpen} 
       onClose={() => {
         onClose();
-        setStep(1); // Reset step on close
+        setStep(1);
       }} 
       title={step === 1 ? "Select Karigar" : "Assign Quantity"}
     >
       <div className="space-y-4">
         
-        {/* STEP 1: KARIGAR SELECTION (VERTICAL CARDS) */}
+        {/* STEP 1: KARIGAR SELECTION */}
         {step === 1 && (
           <div className="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto p-1">
             {karigars.length === 0 ? (
@@ -99,7 +98,7 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
 
         {/* STEP 2: QUANTITY INPUT */}
         {step === 2 && selectedKarigar && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Karigar Preview Header */}
             <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
               <button onClick={handleBack} className="p-2 hover:bg-white rounded-full transition-colors">
@@ -116,30 +115,20 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
               </div>
             </div>
 
-            {/* Stock Summary */}
-            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-              <p className="text-xs font-black text-blue-800 uppercase mb-2">Available Stock</p>
-              <div className="flex flex-wrap gap-2">
-                {availableEntries.map(([k, v]) => (
-                  <span key={k} className="bg-white px-2 py-1 rounded-md text-[11px] font-bold text-blue-700 border border-blue-100">
-                    {k}: {v as number}
-                  </span>
-                ))}
-              </div>
-            </div>
+            {/* Note: Available Stock summary (blue box) removed as per request */}
 
             {/* Quantity Inputs */}
-            <div className="grid grid-cols-2 gap-4 max-h-[40vh] overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 max-h-[45vh] overflow-y-auto pr-1">
               {availableEntries.map(([size, max]) => (
-                <div key={size} className="space-y-1">
-                  <label className="block text-xs font-black text-gray-600 text-center uppercase">
-                    {size} (Max: {max as number})
+                <div key={size} className="space-y-2">
+                  <label className="block text-lg font-black text-gray-800 text-center uppercase tracking-tight">
+                    {size} <span className="text-blue-600">(Max: {max as number})</span>
                   </label>
                   <input 
                     type="number" 
                     min="0" 
                     max={max as number} 
-                    className="w-full border-2 border-gray-100 rounded-xl p-3 text-center text-lg font-bold focus:border-blue-500 focus:outline-none transition-colors" 
+                    className="w-full border-2 border-gray-100 rounded-xl p-4 text-center text-2xl font-black focus:border-blue-500 focus:outline-none transition-colors shadow-sm bg-white" 
                     placeholder="0"
                     value={formQty[size] || ''} 
                     onChange={e => setFormQty({
@@ -155,14 +144,13 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
             <button 
               onClick={handleSubmit}
               disabled={Object.values(formQty).every(v => !v || v === 0)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-lg shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50 disabled:active:scale-100"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50 disabled:active:scale-100 mt-4"
             >
-              <UserPlus size={20} /> Confirm Assignment
+              <UserPlus size={24} /> Confirm Assignment
             </button>
           </div>
         )}
 
-        {/* Footer actions for Step 1 */}
         {step === 1 && (
           <div className="flex justify-center pt-2">
             <button 
