@@ -180,17 +180,25 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 
         {/* 1. CATEGORY SELECTOR */}
         <div className="bg-blue-50 p-3 rounded border border-blue-100">
-          <label className="block text-xs font-bold text-blue-800 mb-1 flex items-center gap-1">
-            <Tag size={12}/> Select Category (Auto-fills Rate & Sizes)
-          </label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-xs font-bold text-blue-800 flex items-center gap-1">
+              <Tag size={12}/> Category (Optional)
+            </label>
+            <span className="text-[10px] text-blue-600">
+              *Helper for auto-filling rates
+            </span>
+          </div>
+          
           <select
-            className="w-full border rounded p-2 text-sm"
+            className="w-full border rounded p-2 text-sm bg-white"
             value={selectedCatId}
             onChange={(e) => handleCategoryChange(e.target.value)}
           >
-            <option value="">-- Manual / No Category --</option>
+            <option value="">-- No Category (Enter Manually) --</option>
             {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name} (₹{cat.defaultRate})</option>
+              <option key={cat.id} value={cat.id}>
+                {cat.name} — Sets Rate to ₹{cat.defaultRate}
+              </option>
             ))}
           </select>
         </div>
