@@ -84,17 +84,15 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <img 
-                src={currentUser.avatarUrl || 'https://i.pravatar.cc/150'} 
-                className="w-8 h-8 rounded-full border object-cover" 
-                alt="" 
-              />
-              <div className="text-sm hidden sm:block">
-                <p className="font-medium text-gray-900">{currentUser.name}</p>
-                <p className="text-xs text-gray-500 uppercase">{currentUser.role}</p>
-              </div>
-            </div>
+  {/* ✅ DISPLAY NAME ONLY - NO IMAGE */}
+  <div className="text-right">
+    <p className="font-bold text-black text-base leading-none">
+      {currentUser.name}
+    </p>
+    <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">
+      {currentUser.role}
+    </p>
+  </div>
             
             {/* ✅ INSTANT LOGOUT BUTTON */}
             <button 
