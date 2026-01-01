@@ -1,6 +1,6 @@
 /**
  * services/assignmentService.ts
- * STATUS: FIXED (Added Debugging + Payout Verification) ✅
+ * STATUS: UPDATED (Added Detailed Ledger Entry with Sizes) ✅
  */
 import { supabase } from '../src/supabaseClient';
 import { SizeQty, AssignmentStatus, Batch } from '../types';
@@ -33,7 +33,7 @@ export const assignmentService = {
     const rate = Number(batch.ratePerPiece) || 0;
     const amountToPay = sessionPassedCount * rate;
 
-    // DEBUG ALERT: You will see this on screen
+    // DEBUG ALERT
     alert(`QC Result: ${sessionPassedCount} Passed, Rate: ₹${rate}, Total Pay: ₹${amountToPay}`);
 
     try {
@@ -48,10 +48,18 @@ export const assignmentService = {
 
         if (fetchError) throw new Error("Could not find Karigar profile: " + fetchError.message);
 
+        // ✅ UPDATED: Added detailed description with sizes and separate data fields
+        const passedSizes = Object.entries(passedQty)
+          .filter(([_, qty]) => (qty as number) > 0)
+          .map(([size, qty]) => `${size}(${qty})`)
+          .join(', ');
+
         const newEntry = {
           id: crypto.randomUUID(),
           date: new Date().toISOString(),
-          description: `QC Passed: ${batch.styleName} (${sessionPassedCount} units)`,
+          description: `QC Passed: ${batch.styleName} [${passedSizes}]`,
+          rate: rate, // Added for new column
+          quantity: sessionPassedCount, // Added for new column
           amount: amountToPay,
           type: 'CREDIT'
         };
