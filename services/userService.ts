@@ -139,28 +139,52 @@ export const userService = {
   // ------------------------------------------------------------------
   // 4. TRANSACTION (Required by App.tsx)
   // ------------------------------------------------------------------
-  async handleTransaction(userId: string, amount: number, remark: string, type: 'CREDIT' | 'DEBIT') {
-    const signedAmount = type === 'CREDIT' ? amount : -amount;
+  async handleTransaction(userId: string, amount: number, description: string, type: 'CREDIT' | 'DEBIT') {
+    try {
+      // 1. Get the latest profile data from DB
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('wallet_balance, ledger')
+        .eq('id', userId)
+        .single();
 
-    const { error: ledgerError } = await supabase
-      .from('ledger_entries')
-      .insert([{
-        user_id: userId,
-        description: remark || (type === 'CREDIT' ? 'Manual Credit' : 'Manual Debit'),
+      if (fetchError) throw fetchError;
+
+      // 2. Calculate new balance
+      const currentBalance = Number(profile.wallet_balance) || 0;
+      const newBalance = type === 'CREDIT' 
+        ? currentBalance + amount 
+        : currentBalance - amount;
+
+      // 3. Create the ledger entry
+      const newEntry = {
+        id: crypto.randomUUID(),
+        date: new Date().toISOString(),
+        description: description,
         amount: amount,
-        type: type
-      }]);
+        type: type // 'CREDIT' or 'DEBIT'
+      };
 
-    const { error: walletError } = await supabase.rpc('increment_wallet', { 
-      user_id: userId, 
-      amount: signedAmount 
-    });
+      const updatedLedger = [...(Array.isArray(profile.ledger) ? profile.ledger : []), newEntry];
 
-    if (ledgerError || walletError) {
-      alert("Transaction failed");
-    } else {
-      console.log("✅ Transaction Success");
-      window.location.reload();
+      // 4. Update Database (Using snake_case to match SQL)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          wallet_balance: newBalance,
+          ledger: updatedLedger
+        })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // 5. Success
+      alert(`Transaction Successful! New Balance: ₹${newBalance}`);
+      window.location.reload(); // Force refresh to update the Admin UI
+
+    } catch (err: any) {
+      console.error('Transaction error:', err);
+      alert('Failed to update payment: ' + err.message);
     }
   }
 };
