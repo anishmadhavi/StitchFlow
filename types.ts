@@ -13,6 +13,13 @@ export enum Role {
   QC = 'QC'
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  defaultRate: number;
+  allowedSizes: string[];
+}
+
 export enum BatchStatus {
   PENDING_MATERIAL = 'Pending Material',
   CUTTING_DONE = 'Cutting Done',
