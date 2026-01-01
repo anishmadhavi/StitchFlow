@@ -1,6 +1,7 @@
 /**
- * App.tsx
- * STATUS: FIXED (Added Force Logout Logic) 🛠️
+ * App.tsx (Refactored)
+ * Purpose: Main Application Component -,  Clean routing logic only, Uses hooks for state, Uses services for operations
+ * Description: Role-based routing with separated concerns
  */
 
 import React from 'react';
