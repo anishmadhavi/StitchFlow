@@ -120,6 +120,7 @@ export default function App() {
             onAddUser={userService.addUser}
             onDeleteUser={(userId) => userService.deleteUser(userId, currentUser.id)}
             onUpdateUser={userService.updateUser}
+            onDeleteBatch={batchService.deleteBatch}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
           />
         )}
@@ -130,6 +131,7 @@ export default function App() {
             users={users}
             onCreateBatch={batchService.createBatch}
             onFinalizeCut={batchService.finalizeCut}
+            onDeleteBatch={batchService.deleteBatch}
             onAssignToKarigar={(bId, kId, qty) => batchService.assignToKarigar(bId, kId, qty, batches, users)}
             onSubmitQC={(bId, aId, qty) => assignmentService.handleQCSubmit(bId, aId, qty, batches)}
           />
