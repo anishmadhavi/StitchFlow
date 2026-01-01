@@ -1,6 +1,6 @@
 /**
  * services/assignmentService.ts
- * STATUS: FIXED (Partial Payout Logic per QC Session) ✅
+ * STATUS: FIXED (Added Debugging + Payout Verification) ✅
  */
 import { supabase } from '../src/supabaseClient';
 import { SizeQty, AssignmentStatus, Batch } from '../types';
@@ -9,12 +9,16 @@ export const assignmentService = {
   async handleQCSubmit(batchId: string, assignmentId: string, passedQty: SizeQty, batches: Batch[]) {
     const batch = batches.find(b => b.id === batchId);
     const assignment = batch?.assignments.find(a => a.id === assignmentId);
-    if (!batch || !assignment) return;
+    
+    if (!batch || !assignment) {
+      alert("Error: Batch or Assignment not found");
+      return;
+    }
 
-    // 1. Calculate how many pieces passed and how many failed in THIS session
-    const reworkQty: SizeQty = {};
+    // 1. Calculate Payout for this session
     let sessionPassedCount = 0;
     let sessionReworkCount = 0;
+    const reworkQty: SizeQty = {};
 
     Object.keys(assignment.assignedQty).forEach(size => {
       const assigned = Number(assignment.assignedQty[size]) || 0;
@@ -26,18 +30,23 @@ export const assignmentService = {
       sessionReworkCount += rework;
     });
 
+    const rate = Number(batch.ratePerPiece) || 0;
+    const amountToPay = sessionPassedCount * rate;
+
+    // DEBUG ALERT: You will see this on screen
+    alert(`QC Result: ${sessionPassedCount} Passed, Rate: ₹${rate}, Total Pay: ₹${amountToPay}`);
+
     try {
-      // 2. IMMEDIATE PARTIAL PAYOUT
-      // Only pay for the pieces that passed in this specific QC round
-      if (sessionPassedCount > 0) {
-        const amountToPay = sessionPassedCount * batch.ratePerPiece;
-        
-        // Get latest Karigar data
-        const { data: karigar } = await supabase
+      // 2. Update Karigar Profile (Pay the money)
+      if (amountToPay > 0) {
+        // Fetch latest karigar data
+        const { data: karigar, error: fetchError } = await supabase
           .from('profiles')
           .select('wallet_balance, ledger')
           .eq('id', assignment.karigarId)
           .single();
+
+        if (fetchError) throw new Error("Could not find Karigar profile: " + fetchError.message);
 
         const newEntry = {
           id: crypto.randomUUID(),
@@ -47,33 +56,38 @@ export const assignmentService = {
           type: 'CREDIT'
         };
 
-        const updatedBalance = (karigar?.wallet_balance || 0) + amountToPay;
-        const updatedLedger = [...(karigar?.ledger || []), newEntry];
+        const currentBalance = Number(karigar.wallet_balance) || 0;
+        const currentLedger = Array.isArray(karigar.ledger) ? karigar.ledger : [];
 
-        await supabase.from('profiles').update({
-          wallet_balance: updatedBalance,
-          ledger: updatedLedger
-        }).eq('id', assignment.karigarId);
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            wallet_balance: currentBalance + amountToPay,
+            ledger: [...currentLedger, newEntry]
+          })
+          .eq('id', assignment.karigarId);
+
+        if (profileError) throw new Error("Wallet Update Failed: " + profileError.message);
       }
 
-      // 3. UPDATE ASSIGNMENT
-      // If there is rework, we update the assignment to reflect ONLY the remaining rework pieces
-      const { error } = await supabase.from('assignments').update({
-        status: sessionReworkCount > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
-        assigned_qty: sessionReworkCount > 0 ? reworkQty : assignment.assignedQty,
-        qc_notes: sessionReworkCount > 0 ? `Please fix ${sessionReworkCount} pieces.` : ''
-      }).eq('id', assignmentId);
+      // 3. Update Assignment Status
+      const { error: assignError } = await supabase
+        .from('assignments')
+        .update({
+          status: sessionReworkCount > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
+          assigned_qty: sessionReworkCount > 0 ? reworkQty : assignment.assignedQty,
+          qc_notes: sessionReworkCount > 0 ? `Please rework ${sessionReworkCount} units.` : ''
+        })
+        .eq('id', assignmentId);
 
-      if (error) throw error;
+      if (assignError) throw new Error("Assignment Status Update Failed: " + assignError.message);
 
-      alert(sessionReworkCount > 0 
-        ? `Paid for ${sessionPassedCount} units. Sent ${sessionReworkCount} units for rework.` 
-        : `Full batch passed! Paid for ${sessionPassedCount} units.`);
-      
+      alert("Success! Payout recorded and status updated.");
       window.location.reload();
 
     } catch (err: any) {
-      alert("Error: " + err.message);
+      console.error("QC Error:", err);
+      alert("QC Error: " + err.message);
     }
   },
 
