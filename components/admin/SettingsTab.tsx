@@ -1,13 +1,12 @@
 /**
  * components/admin/SettingsTab.tsx
- * STATUS: UPDATED ✅
- * Features: Shopify Integration + Category Management
+ * STATUS: FIXED (Standard Buttons + Debug Logs) 🛠️
  */
 
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Settings, CheckCircle, AlertCircle, Plus, Trash2, Tag } from 'lucide-react';
 import { supabase } from '../../src/supabaseClient';
-import { Button, Card, Badge } from '../Shared';
+import { Card, Badge } from '../Shared'; // Removed 'Button' import to avoid issues
 import { Category } from '../../types';
 import { SIZE_OPTIONS } from '../../constants';
 
@@ -39,6 +38,7 @@ export const SettingsTab: React.FC = () => {
   };
 
   const handleSaveShopify = async () => {
+    console.log("💾 Saving Shopify Settings...");
     setIsSaving(true);
     try {
       const { error } = await supabase.from('app_settings').upsert({
@@ -48,6 +48,7 @@ export const SettingsTab: React.FC = () => {
       setMessage('Settings saved!');
       setTestResult('success');
     } catch (err: any) {
+      console.error("❌ Save Error:", err);
       setMessage('Error: ' + err.message);
       setTestResult('error');
     } finally {
@@ -56,6 +57,7 @@ export const SettingsTab: React.FC = () => {
   };
 
   const testConnection = async () => {
+    console.log("🔌 Testing Connection...");
     setIsTesting(true);
     setTestResult(null);
     try {
@@ -66,6 +68,7 @@ export const SettingsTab: React.FC = () => {
       setTestResult('success');
       setMessage('Connected Successfully!');
     } catch (err) {
+      console.error("❌ Connection Error:", err);
       setTestResult('error');
       setMessage('Connection Failed.');
     } finally {
@@ -77,10 +80,14 @@ export const SettingsTab: React.FC = () => {
   // 2. CATEGORY LOGIC
   // ------------------------------------------------------------------
   const loadCategories = async () => {
-    const { data } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: true });
     
+    if (error) {
+      console.error("❌ Failed to load categories:", error);
+      return;
+    }
+
     if (data) {
-      // Map DB snake_case to UI camelCase
       const formatted: Category[] = data.map((c: any) => ({
         id: c.id,
         name: c.name,
@@ -92,7 +99,11 @@ export const SettingsTab: React.FC = () => {
   };
 
   const handleCreateCategory = async () => {
+    console.log("🚀 Creating Category Button CLICKED");
+    console.log("📦 Payload:", newCat);
+
     if (!newCat.name || newCat.rate <= 0 || newCat.sizes.length === 0) {
+      console.warn("⚠️ Validation Failed");
       alert("Please enter Name, Rate, and select at least one Size.");
       return;
     }
@@ -106,8 +117,11 @@ export const SettingsTab: React.FC = () => {
 
     const { error } = await supabase.from('categories').insert([dbPayload]);
     
-    if (error) alert("Error creating category: " + error.message);
-    else {
+    if (error) {
+      console.error("❌ Create Error:", error);
+      alert("Error creating category: " + error.message);
+    } else {
+      console.log("✅ Category Created");
       setNewCat({ name: '', rate: 0, sizes: [] }); // Reset form
       loadCategories(); // Reload list
     }
@@ -184,9 +198,14 @@ export const SettingsTab: React.FC = () => {
             </div>
           </div>
 
-          <Button onClick={handleCreateCategory} disabled={catLoading}>
+          {/* ✅ FIXED BUTTON: Standard HTML Button */}
+          <button 
+            onClick={handleCreateCategory} 
+            disabled={catLoading}
+            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 font-medium text-sm"
+          >
             <Plus size={16} className="mr-2"/> Create Category
-          </Button>
+          </button>
         </div>
 
         {/* Existing Categories List */}
@@ -217,7 +236,7 @@ export const SettingsTab: React.FC = () => {
         </div>
       </Card>
 
-      {/* SECTION 2: SHOPIFY SETTINGS (Kept your existing code) */}
+      {/* SECTION 2: SHOPIFY SETTINGS */}
       <Card className="p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 border-b pb-4">
           <RefreshCw className="text-green-600" /> Shopify Integration
@@ -250,8 +269,22 @@ export const SettingsTab: React.FC = () => {
           )}
           
           <div className="flex gap-4 pt-2">
-            <Button variant="outline" onClick={testConnection} disabled={isTesting}>Test Connection</Button>
-            <Button onClick={handleSaveShopify} disabled={isSaving}>Save Settings</Button>
+            {/* ✅ FIXED BUTTONS */}
+            <button 
+              onClick={testConnection} 
+              disabled={isTesting}
+              className="border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 disabled:opacity-50 text-sm font-medium"
+            >
+              {isTesting ? 'Testing...' : 'Test Connection'}
+            </button>
+            
+            <button 
+              onClick={handleSaveShopify} 
+              disabled={isSaving}
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+            >
+              {isSaving ? 'Saving...' : 'Save Settings'}
+            </button>
           </div>
         </div>
       </Card>
