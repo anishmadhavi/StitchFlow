@@ -61,37 +61,42 @@ export const batchService = {
   },
 
   async assignToKarigar(batchId: string, karigarId: string, qty: SizeQty, batches: Batch[], users: User[]) {
-    const karigar = users.find(u => u.id === karigarId);
-    if (!karigar) return;
+  const batch = batches.find(b => b.id === batchId);
+  const karigar = users.find(u => u.id === karigarId);
+  if (!batch || !karigar) return;
 
-    const batch = batches.find(b => b.id === batchId);
-    if (!batch) return;
+  // 1. Calculate NEW Available Stock
+  const updatedAvailableQty = { ...batch.availableQty };
+  Object.entries(qty).forEach(([size, amount]) => {
+    updatedAvailableQty[size] = (Number(updatedAvailableQty[size]) || 0) - (Number(amount) || 0);
+  });
 
-    const newAvailable = { ...batch.availableQty };
-    Object.entries(qty).forEach(([size, amount]) => {
-      newAvailable[size] = (newAvailable[size] || 0) - amount;
-    });
+  try {
+    // 2. CREATE ASSIGNMENT
+    const { error: assignError } = await supabase.from('assignments').insert([{
+      batch_id: batchId,
+      karigar_id: karigarId,
+      karigar_name: karigar.name,
+      assigned_qty: qty,
+      status: 'Assigned'
+    }]);
 
-    const { error: assignError } = await supabase
-      .from('assignments')
-      .insert([{
-        batch_id: batchId,
-        karigar_id: karigarId,
-        karigar_name: karigar.name,
-        assigned_qty: qty,
-        status: 'Assigned'
-      }]);
+    if (assignError) throw assignError;
 
-    const { error: batchError } = await supabase
-      .from('batches')
-      .update({ 
-        available_qty: newAvailable,
-        status: 'In Production' 
-      })
+    // 3. UPDATE BATCH STOCK IMMEDIATELY
+    const { error: batchError } = await supabase.from('batches')
+      .update({ available_qty: updatedAvailableQty })
       .eq('id', batchId);
 
-    if (assignError || batchError) alert("Error during assignment");
-  },
+    if (batchError) throw batchError;
+
+    alert(`Successfully assigned to ${karigar.name}. Stock updated.`);
+    window.location.reload();
+
+  } catch (err: any) {
+    alert("Assignment failed: " + err.message);
+  }
+}
 
   async handleArchive(batchId: string) {
     const { error } = await supabase
