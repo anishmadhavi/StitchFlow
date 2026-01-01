@@ -1,6 +1,6 @@
 /**
  * components/KarigarDashboard.tsx
- * STATUS: FIXED (Props used + Force Refresh + Photo Mapping) ✅
+ * STATUS: UPDATED (Added Detailed Passbook Table) ✅
  */
 
 import React, { useState, useMemo } from 'react';
@@ -44,10 +44,10 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   );
 
   const passbookEntries = useMemo(() => {
-  // ✅ CHECK BOTH NAMES: Frontend 'ledger' or Database 'u.ledger'
-  const ledger = currentUser.ledger || (currentUser as any).ledger || [];
-  return [...ledger].slice().reverse();
-}, [currentUser]);
+    // ✅ CHECK BOTH NAMES: Frontend 'ledger' or Database 'u.ledger'
+    const ledger = currentUser.ledger || (currentUser as any).ledger || [];
+    return [...ledger].slice().reverse();
+  }, [currentUser]);
 
   const calculateTotalQty = (qty: SizeQty) => Object.values(qty).reduce((sum, val) => (sum as number) + (val as number), 0);
   const isAdvance = (currentUser.walletBalance ?? 0) < 0;
@@ -61,7 +61,6 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
     const filePath = `avatars/${currentUser.id}.jpg`;
 
     try {
-      // 1. Upload to Storage
       const { error: uploadError } = await supabase.storage
         .from('designs')
         .upload(filePath, file, { upsert: true });
@@ -72,16 +71,14 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
         .from('designs')
         .getPublicUrl(filePath);
       
-      // 2. Update Database (snake_case column)
       await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', currentUser.id);
 
-      // 3. Update UI & Refresh
       onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
       alert("Photo updated!");
-      window.location.reload(); // Force refresh to see new photo
+      window.location.reload(); 
 
     } catch (err: any) {
       alert("Photo error: " + err.message);
@@ -165,7 +162,6 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
                 </div>
               </div>
               
-              {/* ✅ ACTION BUTTONS: Now using props + immediate reload */}
               <div className="bg-gray-50 p-3 border-t flex gap-3">
                 {item.status === AssignmentStatus.ASSIGNED ? (
                   <>
@@ -206,25 +202,47 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
         </div>
       )}
 
-      {/* Passbook remains the same... */}
+      {/* ✅ UPDATED: Added Rate and Quantity Columns with Size Extraction */}
       {activeTab === 'passbook' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm text-left">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm text-left min-w-[500px]">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Description</th>
-                <th className="px-4 py-3 text-right">Cr</th>
-                <th className="px-4 py-3 text-right">Dr</th>
+                <th className="px-3 py-3 whitespace-nowrap">Date</th>
+                <th className="px-3 py-3">Description</th>
+                <th className="px-3 py-3 text-center">Qty</th>
+                <th className="px-3 py-3 text-center">Rate</th>
+                <th className="px-3 py-3 text-right">Cr</th>
+                <th className="px-3 py-3 text-right">Dr</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {passbookEntries.map(entry => (
-                <tr key={entry.id}>
-                  <td className="px-4 py-3 text-gray-500">{format(new Date(entry.date), 'dd MMM')}</td>
-                  <td className="px-4 py-3 font-medium">{entry.description}</td>
-                  <td className="px-4 py-3 text-right text-green-700 font-bold">{entry.type === 'CREDIT' ? `₹${entry.amount}` : '-'}</td>
-                  <td className="px-4 py-3 text-right text-red-700 font-bold">{entry.type === 'DEBIT' ? `₹${entry.amount}` : '-'}</td>
+                <tr key={entry.id} className="hover:bg-gray-50">
+                  <td className="px-3 py-3 text-gray-500 whitespace-nowrap">
+                    {format(new Date(entry.date), 'dd MMM')}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="font-bold text-gray-900">{entry.description.split('[')[0]}</div>
+                    {/* ✅ Show sizes if they exist in brackets */}
+                    {entry.description.includes('[') && (
+                      <div className="text-[10px] text-blue-600 font-mono mt-0.5">
+                        {entry.description.match(/\[(.*?)\]/)?.[1]}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-center font-medium">
+                    {(entry as any).quantity || '-'}
+                  </td>
+                  <td className="px-3 py-3 text-center text-gray-500">
+                    {(entry as any).rate ? `₹${(entry as any).rate}` : '-'}
+                  </td>
+                  <td className="px-3 py-3 text-right text-green-700 font-black">
+                    {entry.type === 'CREDIT' ? `₹${entry.amount}` : '-'}
+                  </td>
+                  <td className="px-3 py-3 text-right text-red-700 font-black">
+                    {entry.type === 'DEBIT' ? `₹${entry.amount}` : '-'}
+                  </td>
                 </tr>
               ))}
             </tbody>
