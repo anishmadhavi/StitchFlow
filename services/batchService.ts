@@ -1,106 +1,110 @@
 /**
- * services/batchService.ts
- * Purpose: Batch and production management operations, Create batches, Finalize cuts, Assign to karigars, Archive batches, **Exports:** `batchService` object
+ * services/assignmentService.ts
+ * STATUS: FIXED (Stock Return + Clean Descriptions + Syntax) ✅
  */
-
 import { supabase } from '../src/supabaseClient';
-import { Batch, SizeQty, User } from '../types';
+import { SizeQty, AssignmentStatus, Batch } from '../types';
 
-export const batchService = {
-  async createBatch(batchData: Partial<Batch>) {
-    const { error } = await supabase
-      .from('batches')
-      .insert([{
-        style_name: batchData.styleName,
-        sku: batchData.sku,
-        image_url: batchData.imageUrl,
-        rate_per_piece: batchData.ratePerPiece,
-        planned_qty: batchData.plannedQty,
-        available_qty: batchData.plannedQty,
-        status: 'Pending Material'
-      }]);
-
-    if (error) alert("Error creating batch: " + error.message);
-  },
-
-  async deleteBatch(batchId: string) {
-    if (!confirm("Are you sure you want to delete this batch? This cannot be undone.")) return;
-
-    // 1. Delete from Database
-    const { error } = await supabase
-      .from('batches')
-      .delete()
-      .eq('id', batchId);
-
-    if (error) {
-      console.error("Delete failed:", error);
-      alert("Failed to delete: " + error.message);
-    } else {
-      alert("Batch deleted successfully");
-      window.location.reload(); // Refresh to remove it from the list
-    }
-  },
-
-  async finalizeCut(batchId: string, actualQty: SizeQty) {
-    const { error } = await supabase
-      .from('batches')
-      .update({
-        actual_cut_qty: actualQty,
-        available_qty: actualQty,
-        status: 'Cutting Done'
-      })
-      .eq('id', batchId);
-
-    if (error) {
-      alert("Error finalizing cut: " + error.message);
-    } else {
-      // ✅ ALTERNATIVE FIX: Just reload the page
-      console.log("✅ Cut Finalized. Reloading...");
-      window.location.reload(); 
-    }
-  },
-
-  async assignToKarigar(batchId: string, karigarId: string, qty: SizeQty, batches: Batch[], users: User[]) {
+export const assignmentService = {
+  async handleQCSubmit(batchId: string, assignmentId: string, passedQty: SizeQty, batches: Batch[]) {
     const batch = batches.find(b => b.id === batchId);
-    const karigar = users.find(u => u.id === karigarId);
-    if (!batch || !karigar) return;
+    const assignment = batch?.assignments.find(a => a.id === assignmentId);
+    
+    if (!batch || !assignment) return;
 
-    const updatedAvailableQty = { ...batch.availableQty };
-    Object.entries(qty).forEach(([size, amount]) => {
-      updatedAvailableQty[size] = (Number(updatedAvailableQty[size]) || 0) - (Number(amount) || 0);
+    let sessionPassedCount = 0;
+    let sessionReworkCount = 0;
+    const reworkQty: SizeQty = {};
+
+    Object.keys(assignment.assignedQty).forEach(size => {
+      const assigned = Number(assignment.assignedQty[size]) || 0;
+      const passed = Number(passedQty[size]) || 0;
+      const rework = assigned - passed;
+      if (rework > 0) reworkQty[size] = rework;
+      sessionPassedCount += passed;
+      sessionReworkCount += rework;
     });
 
+    const rate = Number(batch.ratePerPiece) || Number((batch as any).rate_per_piece) || 0;
+    const amountToPay = sessionPassedCount * rate;
+
     try {
-      const { error: assignError } = await supabase.from('assignments').insert([{
-        batch_id: batchId,
-        karigar_id: karigarId,
-        karigar_name: karigar.name,
-        assigned_qty: qty,
-        status: 'Assigned'
-      }]);
+      if (amountToPay > 0) {
+        const { data: karigar } = await supabase
+          .from('profiles')
+          .select('wallet_balance, ledger')
+          .eq('id', assignment.karigarId)
+          .single();
 
-      if (assignError) throw assignError;
+        // ✅ CLEAN DESCRIPTION: Removed "QC Passed:" prefix
+        const passedSizes = Object.entries(passedQty)
+          .filter(([_, qty]) => (qty as number) > 0)
+          .map(([size, qty]) => `${size}(${qty})`)
+          .join(', ');
 
-      const { error: batchError } = await supabase.from('batches')
-        .update({ available_qty: updatedAvailableQty })
-        .eq('id', batchId);
+        const newEntry = {
+          id: crypto.randomUUID(),
+          date: new Date().toISOString(),
+          description: `${batch.styleName} [${passedSizes}]`, 
+          rate: rate,
+          quantity: sessionPassedCount,
+          amount: amountToPay,
+          type: 'CREDIT'
+        };
 
-      if (batchError) throw batchError;
+        await supabase.from('profiles').update({
+          wallet_balance: (Number(karigar?.wallet_balance) || 0) + amountToPay,
+          ledger: [...(Array.isArray(karigar?.ledger) ? karigar.ledger : []), newEntry]
+        }).eq('id', assignment.karigarId);
+      }
 
-      alert(`Successfully assigned to ${karigar.name}. Stock updated.`);
+      await supabase.from('assignments').update({
+        status: sessionReworkCount > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
+        assigned_qty: sessionReworkCount > 0 ? reworkQty : assignment.assignedQty,
+        qc_notes: sessionReworkCount > 0 ? `Please fix ${sessionReworkCount} units.` : ''
+      }).eq('id', assignmentId);
+
+      alert(`Success! Recorded ${sessionPassedCount} units.`);
       window.location.reload();
-
     } catch (err: any) {
-      alert("Assignment failed: " + err.message);
+      alert("QC Error: " + err.message);
     }
-  }, // ✅ FIXED: Added missing comma to separate from next function
-
-  async handleArchive(batchId: string) {
-    const { error } = await supabase
-      .from('batches')
-      .update({ status: 'Archived' })
-      .eq('id', batchId);
-    
-    if (error) throw error;
-    window.location.reload();
   },
+
+  async updateAssignmentStatus(batchId: string, assignmentId: string, status: AssignmentStatus, batches: Batch[]) {
+    try {
+      // ✅ STOCK RETURN LOGIC: Add units back to batch if Karigar rejects
+      if (status === AssignmentStatus.REJECTED) {
+        const batch = batches.find(b => b.id === batchId);
+        const { data: assignment } = await supabase
+          .from('assignments')
+          .select('assigned_qty')
+          .eq('id', assignmentId)
+          .single();
+
+        if (batch && assignment) {
+          const returnedQty = assignment.assigned_qty;
+          const newAvailableQty = { ...batch.availableQty };
+
+          Object.entries(returnedQty).forEach(([size, amount]) => {
+            newAvailableQty[size] = (Number(newAvailableQty[size]) || 0) + (Number(amount) || 0);
+          });
+
+          await supabase.from('batches')
+            .update({ available_qty: newAvailableQty })
+            .eq('id', batchId);
+        }
+      }
+
+      const { error } = await supabase
+        .from('assignments')
+        .update({ status })
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+      window.location.reload();
+    } catch (err: any) {
+      alert("Update failed: " + err.message);
+    }
+  }
+};
