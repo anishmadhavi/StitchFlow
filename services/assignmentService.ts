@@ -1,56 +1,75 @@
 /**
  * services/assignmentService.ts
- * Purpose: Assignment and QC management operations, Update assignment status, Handle QC submissions, **Exports:** `assignmentService` object
+ * STATUS: FIXED (Added Payout & Rework Logic) ✅
  */
-
 import { supabase } from '../src/supabaseClient';
-import { AssignmentStatus, SizeQty, Batch } from '../types';
+import { SizeQty, AssignmentStatus, Batch } from '../types';
 
 export const assignmentService = {
-  async updateAssignmentStatus(assignmentId: string, newStatus: AssignmentStatus) {
-    const { error } = await supabase
-      .from('assignments')
-      .update({ 
-        status: newStatus,
-        completed_at: newStatus === 'Stitched' ? new Date().toISOString() : null
-      })
-      .eq('id', assignmentId);
-
-    if (error) alert("Update failed: " + error.message);
-  },
-
   async handleQCSubmit(batchId: string, assignmentId: string, passedQty: SizeQty, batches: Batch[]) {
+    // 1. Find the specific batch and assignment
     const batch = batches.find(b => b.id === batchId);
-    if (!batch) return;
-    
-    const assignment = batch.assignments.find(a => a.id === assignmentId);
-    if (!assignment) return;
+    const assignment = batch?.assignments.find(a => a.id === assignmentId);
+    if (!batch || !assignment) return;
 
-    const totalPassedCount = Object.values(passedQty).reduce((a, b) => a + (b as number), 0);
-    const amount = totalPassedCount * batch.ratePerPiece;
+    const totalPassed = Object.values(passedQty).reduce((a, b) => a + (Number(b) || 0), 0);
+    const totalAssigned = Object.values(assignment.assignedQty).reduce((a, b) => a + (Number(b) || 0), 0);
+    const totalRework = totalAssigned - totalPassed;
 
-    // Mark assignment as QC Passed
-    const { error: assignError } = await supabase
-      .from('assignments')
-      .update({ status: 'QC Passed' })
-      .eq('id', assignmentId);
+    try {
+      // 2. Calculate Payout
+      const amountToPay = totalPassed * batch.ratePerPiece;
+      const newStatus = totalRework > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED;
 
-    // Add to Ledger and Wallet
-    if (amount > 0) {
-      await supabase.from('ledger_entries').insert([{
-        user_id: assignment.karigarId,
-        description: `QC Passed: ${batch.styleName} (${totalPassedCount} pcs)`,
-        amount: amount,
-        type: 'CREDIT',
-        related_batch_id: batchId
-      }]);
+      // 3. Get Current Karigar Data (to update balance/ledger)
+      const { data: karigar } = await supabase
+        .from('profiles')
+        .select('wallet_balance, ledger')
+        .eq('id', assignment.karigarId)
+        .single();
 
-      await supabase.rpc('increment_wallet', { 
-        user_id: assignment.karigarId, 
-        amount: amount 
-      });
+      if (karigar && totalPassed > 0) {
+        const newEntry = {
+          id: crypto.randomUUID(),
+          date: new Date().toISOString(),
+          description: `QC Passed: ${batch.styleName} (${totalPassed} pcs)`,
+          amount: amountToPay,
+          type: 'CREDIT'
+        };
+
+        const updatedLedger = [...(karigar.ledger || []), newEntry];
+        const updatedBalance = (karigar.wallet_balance || 0) + amountToPay;
+
+        // 4. UPDATE KARIGAR WALLET
+        await supabase.from('profiles').update({
+          wallet_balance: updatedBalance,
+          ledger: updatedLedger
+        }).eq('id', assignment.karigarId);
+      }
+
+      // 5. UPDATE ASSIGNMENT STATUS
+      // Note: If rework > 0, status becomes 'QC Rework', 
+      // which automatically shows back up in Karigar's 'My Jobs'
+      const { error } = await supabase
+        .from('assignments')
+        .update({ 
+          status: newStatus,
+          qc_notes: totalRework > 0 ? `Rework required for ${totalRework} pieces` : ''
+        })
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+
+      alert(totalRework > 0 ? `Partial Pass: ${totalRework} pieces sent back for Rework.` : "QC Passed! Karigar paid.");
+      window.location.reload(); // Refresh to sync data
+
+    } catch (err: any) {
+      alert("QC Submission Failed: " + err.message);
     }
-
-    if (assignError) alert("QC processing error");
   },
+
+  // Helper for Karigar actions
+  async updateAssignmentStatus(assignmentId: string, status: AssignmentStatus) {
+    await supabase.from('assignments').update({ status }).eq('id', assignmentId);
+  }
 };
