@@ -23,6 +23,24 @@ export const batchService = {
     if (error) alert("Error creating batch: " + error.message);
   },
 
+  async deleteBatch(batchId: string) {
+    if (!confirm("Are you sure you want to delete this batch? This cannot be undone.")) return;
+
+    // 1. Delete from Database
+    const { error } = await supabase
+      .from('batches')
+      .delete()
+      .eq('id', batchId);
+
+    if (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete: " + error.message);
+    } else {
+      alert("Batch deleted successfully");
+      window.location.reload(); // Refresh to remove it from the list
+    }
+  },
+
   async finalizeCut(batchId: string, actualQty: SizeQty) {
     const { error } = await supabase
       .from('batches')
