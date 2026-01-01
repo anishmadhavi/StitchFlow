@@ -99,7 +99,33 @@ export const assignmentService = {
     }
   },
 
-  async updateAssignmentStatus(assignmentId: string, status: AssignmentStatus) {
-    await supabase.from('assignments').update({ status }).eq('id', assignmentId);
+  async updateAssignmentStatus(batchId: string, assignmentId: string, status: AssignmentStatus, batches: Batch[]) {
+  try {
+    // If Rejection, we must handle stock return
+    if (status === 'Rejected') {
+      const batch = batches.find(b => b.id === batchId);
+      const { data: assignment } = await supabase.from('assignments').select('*').eq('id', assignmentId).single();
+
+      if (batch && assignment) {
+        const returnedQty = assignment.assigned_qty;
+        const newAvailableQty = { ...batch.availableQty };
+
+        // ADD back the units to the batch
+        Object.entries(returnedQty).forEach(([size, amount]) => {
+          newAvailableQty[size] = (Number(newAvailableQty[size]) || 0) + (Number(amount) || 0);
+        });
+
+        // Update Batch Stock
+        await supabase.from('batches').update({ available_qty: newAvailableQty }).eq('id', batchId);
+      }
+    }
+
+    // Update the assignment status itself
+    const { error } = await supabase.from('assignments').update({ status }).eq('id', assignmentId);
+    if (error) throw error;
+
+    window.location.reload();
+  } catch (err: any) {
+    alert("Update failed: " + err.message);
   }
-};
+}
