@@ -1,6 +1,6 @@
 /**
  * services/assignmentService.ts
- * STATUS: FIXED (Rework Quantity Rollback + Payout Logic) ✅
+ * STATUS: FIXED (Partial Payout Logic per QC Session) ✅
  */
 import { supabase } from '../src/supabaseClient';
 import { SizeQty, AssignmentStatus, Batch } from '../types';
@@ -11,10 +11,10 @@ export const assignmentService = {
     const assignment = batch?.assignments.find(a => a.id === assignmentId);
     if (!batch || !assignment) return;
 
-    // 1. Calculate Rework Quantity (Size by Size)
+    // 1. Calculate how many pieces passed and how many failed in THIS session
     const reworkQty: SizeQty = {};
-    let totalPassed = 0;
-    let totalRework = 0;
+    let sessionPassedCount = 0;
+    let sessionReworkCount = 0;
 
     Object.keys(assignment.assignedQty).forEach(size => {
       const assigned = Number(assignment.assignedQty[size]) || 0;
@@ -22,15 +22,17 @@ export const assignmentService = {
       const rework = assigned - passed;
       
       if (rework > 0) reworkQty[size] = rework;
-      totalPassed += passed;
-      totalRework += rework;
+      sessionPassedCount += passed;
+      sessionReworkCount += rework;
     });
 
     try {
-      // 2. Handle Payout if any pieces passed
-      if (totalPassed > 0) {
-        const amountToPay = totalPassed * batch.ratePerPiece;
+      // 2. IMMEDIATE PARTIAL PAYOUT
+      // Only pay for the pieces that passed in this specific QC round
+      if (sessionPassedCount > 0) {
+        const amountToPay = sessionPassedCount * batch.ratePerPiece;
         
+        // Get latest Karigar data
         const { data: karigar } = await supabase
           .from('profiles')
           .select('wallet_balance, ledger')
@@ -40,28 +42,34 @@ export const assignmentService = {
         const newEntry = {
           id: crypto.randomUUID(),
           date: new Date().toISOString(),
-          description: `QC Passed: ${batch.styleName} (${totalPassed} pcs)`,
+          description: `QC Passed: ${batch.styleName} (${sessionPassedCount} units)`,
           amount: amountToPay,
           type: 'CREDIT'
         };
 
+        const updatedBalance = (karigar?.wallet_balance || 0) + amountToPay;
+        const updatedLedger = [...(karigar?.ledger || []), newEntry];
+
         await supabase.from('profiles').update({
-          wallet_balance: (karigar?.wallet_balance || 0) + amountToPay,
-          ledger: [...(karigar?.ledger || []), newEntry]
+          wallet_balance: updatedBalance,
+          ledger: updatedLedger
         }).eq('id', assignment.karigarId);
       }
 
-      // 3. Update Assignment
-      // If rework exists, we update the quantity to ONLY show rework pieces
+      // 3. UPDATE ASSIGNMENT
+      // If there is rework, we update the assignment to reflect ONLY the remaining rework pieces
       const { error } = await supabase.from('assignments').update({
-        status: totalRework > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
-        assigned_qty: totalRework > 0 ? reworkQty : assignment.assignedQty, // 👈 KEY FIX
-        qc_notes: totalRework > 0 ? `Please fix ${totalRework} pieces.` : ''
+        status: sessionReworkCount > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
+        assigned_qty: sessionReworkCount > 0 ? reworkQty : assignment.assignedQty,
+        qc_notes: sessionReworkCount > 0 ? `Please fix ${sessionReworkCount} pieces.` : ''
       }).eq('id', assignmentId);
 
       if (error) throw error;
 
-      alert(totalRework > 0 ? `Sent ${totalRework} pieces for rework.` : "Passed! Karigar paid.");
+      alert(sessionReworkCount > 0 
+        ? `Paid for ${sessionPassedCount} units. Sent ${sessionReworkCount} units for rework.` 
+        : `Full batch passed! Paid for ${sessionPassedCount} units.`);
+      
       window.location.reload();
 
     } catch (err: any) {
