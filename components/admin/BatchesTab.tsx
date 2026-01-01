@@ -4,68 +4,88 @@
  */
 
 import React from 'react';
-import { Eye, Archive } from 'lucide-react';
+import { Eye, Archive, Trash2 } from 'lucide-react'; // Import Trash2
 import { Batch, BatchStatus } from '../../types';
-import { Button, Card, Badge } from '../Shared';
+import { Badge, Button } from '../Shared';
 
 interface BatchesTabProps {
   batches: Batch[];
   onOpenDetails: (batch: Batch) => void;
   onArchiveBatch: (batchId: string) => void;
+  onDeleteBatch: (batchId: string) => void; // 👈 New Prop
 }
 
 export const BatchesTab: React.FC<BatchesTabProps> = ({
   batches,
   onOpenDetails,
-  onArchiveBatch
+  onArchiveBatch,
+  onDeleteBatch
 }) => {
   return (
-    <div className="grid grid-cols-1 gap-4">
-{batches.length === 0 ? (
-  <p className="text-gray-500 text-center py-8">No batches yet. Create your first batch!</p>
-) : batches.map(batch => (
-  <Card key={batch.id} className="flex flex-col md:flex-row md:items-center p-4 gap-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => onOpenDetails(batch)}>
-          <img 
-            src={batch.imageUrl} 
-            alt={batch.styleName} 
-            className="w-16 h-16 rounded-md object-cover bg-gray-100" 
-          />
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">{batch.styleName}</h3>
-              <span className="text-xs text-gray-500 font-mono">{batch.sku}</span>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge color={
-                batch.status === BatchStatus.COMPLETED ? 'green' :
-                batch.status === BatchStatus.IN_PRODUCTION ? 'blue' : 'yellow'
-              }>
-                {batch.status}
-              </Badge>
-              <span className="text-sm text-gray-500">Rate: ₹{batch.ratePerPiece}</span>
-            </div>
-            <div className="mt-2 text-xs text-gray-500 flex flex-wrap gap-2">
-              {batch.plannedQty && Object.entries(batch.plannedQty)
-                .filter(([_, q]) => (q as number) > 0)
-                .map(([s, q]) => (
-                  <span key={s} className="bg-gray-100 px-2 py-0.5 rounded border">
-                    {s}: {q as number}
-                  </span>
-                ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-            <Button size="sm" variant="ghost" onClick={() => onOpenDetails(batch)}>
-              <Eye size={16} className="mr-1"/> Details
-            </Button>
-            {batch.status === BatchStatus.COMPLETED && (
-              <Button size="sm" variant="secondary" onClick={() => onArchiveBatch(batch.id)}>
-                <Archive size={16} className="mr-1" /> Archive
-              </Button>
-            )}
-          </div>
-        </Card>
-      ))}
+    <div className="bg-white shadow rounded-lg overflow-hidden">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batch Info</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate</th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {batches.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                No active batches found.
+              </td>
+            </tr>
+          )}
+          {batches.map((batch) => (
+            <tr key={batch.id} className="hover:bg-gray-50">
+              <td className="px-6 py-4">
+                <div className="flex items-center">
+                  <img className="h-10 w-10 rounded-full object-cover" src={batch.imageUrl} alt="" />
+                  <div className="ml-4">
+                    <div className="text-sm font-medium text-gray-900">{batch.styleName}</div>
+                    <div className="text-sm text-gray-500">{batch.sku}</div>
+                  </div>
+                </div>
+              </td>
+              <td className="px-6 py-4">
+                <Badge color={batch.status === BatchStatus.COMPLETED ? 'green' : 'blue'}>
+                  {batch.status}
+                </Badge>
+              </td>
+              <td className="px-6 py-4 text-sm text-gray-500">
+                ₹{batch.ratePerPiece}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
+                <button 
+                  onClick={() => onOpenDetails(batch)}
+                  className="text-blue-600 hover:text-blue-900" title="View Details"
+                >
+                  <Eye size={18} />
+                </button>
+                
+                <button 
+                  onClick={() => onArchiveBatch(batch.id)}
+                  className="text-yellow-600 hover:text-yellow-900" title="Archive"
+                >
+                  <Archive size={18} />
+                </button>
+
+                {/* 🗑️ DELETE BUTTON */}
+                <button 
+                  onClick={() => onDeleteBatch(batch.id)}
+                  className="text-red-600 hover:text-red-900 ml-2" title="Delete Permanently"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
