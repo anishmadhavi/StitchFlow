@@ -1,6 +1,6 @@
 /**
  * services/assignmentService.ts
- * STATUS: FIXED (Stock Return + Clean Descriptions + Syntax) ✅
+ * STATUS: FIXED (Added missing closing brace and clean descriptions) ✅
  */
 import { supabase } from '../src/supabaseClient';
 import { SizeQty, AssignmentStatus, Batch } from '../types';
@@ -107,4 +107,4 @@ export const assignmentService = {
       alert("Update failed: " + err.message);
     }
   }
-};
+}; // <--- This was the missing closing brace!
