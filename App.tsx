@@ -23,7 +23,7 @@ export default function App() {
   
   // Custom hooks
   const { currentUser, authLoading, authError, handleLogin, handleSignUp, handleLogout } = useAuth();
-  cconst { users, batches, dataLoading } = useData(currentUser);
+  const { users, batches, dataLoading } = useData(currentUser);
 
 // ✅ FIND MAPPED USER: This gets the version with updated Wallet & Ledger
 const mappedUser = users.find(u => u.id === currentUser?.id) || currentUser;
