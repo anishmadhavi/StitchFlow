@@ -35,10 +35,15 @@ export function useData(currentUser: User | null) {
         if (profilesError) console.error('Profiles fetch error:', profilesError);
         if (batchesError) console.error('Batches fetch error:', batchesError);
         
-        // 3. Map Users (Profiles)
-        // If your DB uses snake_case for profile fields, map them here if needed.
-        // Assuming profiles columns match User type mostly, or are handled loosely.
-        setUsers(profiles || []);
+        // 3. Map Users (Profiles) - FIX: Added Snake_case -> CamelCase mapping
+        const formattedUsers = (profiles || []).map((u: any) => ({
+          ...u,
+          walletBalance: u.wallet_balance || 0, // Map DB to UI
+          avatarUrl: u.avatar_url,
+          displayPin: u.display_pin,
+          ledger: u.ledger || []
+        }));
+        setUsers(formattedUsers);
 
         // 4. ✅ FIX: Map Batches (Snake_case -> CamelCase)
         const formattedBatches = (rawBatches || []).map((b: any) => ({
