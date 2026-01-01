@@ -31,6 +31,7 @@ interface AdminDashboardProps {
   onArchiveBatch: (batchId: string) => void;
   onAddUser: (name: string, role: Role, mobile: string, pin: string) => void;
   onDeleteUser: (userId: string) => void;
+  onDeleteBatch: (batchId: string) => void;
   onAssignToKarigar: (batchId: string, karigarId: string, qty: SizeQty) => void;
   onUpdateUser?: (userId: string, updates: Partial<User>) => void;
 }
