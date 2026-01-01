@@ -1,6 +1,6 @@
 /**
- * components/AdminDashboard.tsx (Updated with Shared Components)
- * Purpose: Admin Interface - Uses shared modals
+ * components/AdminDashboard.tsx
+ * STATUS: FIXED (Passes onDeleteBatch correctly) ✅
  */
 
 import React, { useState } from 'react';
@@ -8,18 +8,16 @@ import { Plus } from 'lucide-react';
 import { Batch, BatchStatus, Role, User, SizeQty, AssignmentStatus } from '../types';
 import { Button } from './Shared';
 
-// Tab Components (Admin-specific)
+// Tab Components
 import { BatchesTab } from './admin/BatchesTab';
 import { StaffTab } from './admin/StaffTab';
 import { PaymentsTab } from './admin/PaymentsTab';
 import { SettingsTab } from './admin/SettingsTab';
 
-// Modal Components (Admin-specific)
+// Modals
 import { BatchDetailsModal } from './admin/BatchDetailsModal';
 import { CreateUserModal } from './admin/CreateUserModal';
 import { PassbookModal } from './admin/PassbookModal';
-
-// Shared Modal Components (Used by multiple roles)
 import { CreateBatchModal } from './shared/CreateBatchModal';
 import { AssignToKarigarModal } from './shared/AssignToKarigarModal';
 
@@ -31,9 +29,11 @@ interface AdminDashboardProps {
   onArchiveBatch: (batchId: string) => void;
   onAddUser: (name: string, role: Role, mobile: string, pin: string) => void;
   onDeleteUser: (userId: string) => void;
-  onDeleteBatch: (batchId: string) => void;
   onAssignToKarigar: (batchId: string, karigarId: string, qty: SizeQty) => void;
   onUpdateUser?: (userId: string, updates: Partial<User>) => void;
+  
+  // 👇 CRITICAL: This was likely missing or not destructured
+  onDeleteBatch: (batchId: string) => void; 
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -45,14 +45,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onAddUser,
   onDeleteUser,
   onUpdateUser,
-  onAssignToKarigar
+  onAssignToKarigar,
+  onDeleteBatch // 👈 Must be destructured here!
 }) => {
-  // 🔍 TEMPORARY DEBUG LOGS
-  console.log('🔍 AdminDashboard rendered');
-  console.log('📦 batches:', batches);
-  console.log('👥 users:', users);
-  console.log('📊 batches type:', typeof batches, Array.isArray(batches));
-  
   const [activeTab, setActiveTab] = useState<'batches' | 'staff' | 'payments' | 'settings'>('batches');
   
   // Modal states
@@ -134,6 +129,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           batches={activeBatches}
           onOpenDetails={handleOpenBatchDetails}
           onArchiveBatch={onArchiveBatch}
+          onDeleteBatch={onDeleteBatch} // 👈 This connects the Button to the Logic
         />
       )}
 
@@ -156,7 +152,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {activeTab === 'settings' && <SettingsTab />}
 
-      {/* Modals - Using Shared Components */}
+      {/* Modals */}
       <CreateBatchModal
         isOpen={createBatchModalOpen}
         onClose={() => setCreateBatchModalOpen(false)}
