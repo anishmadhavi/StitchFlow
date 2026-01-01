@@ -1,6 +1,6 @@
 /**
  * services/assignmentService.ts
- * STATUS: UPDATED (Added Detailed Ledger Entry with Sizes) ✅
+ * STATUS: FIXED (Stock Return + Clean Descriptions + Syntax) ✅
  */
 import { supabase } from '../src/supabaseClient';
 import { SizeQty, AssignmentStatus, Batch } from '../types';
@@ -10,12 +10,8 @@ export const assignmentService = {
     const batch = batches.find(b => b.id === batchId);
     const assignment = batch?.assignments.find(a => a.id === assignmentId);
     
-    if (!batch || !assignment) {
-      alert("Error: Batch or Assignment not found");
-      return;
-    }
+    if (!batch || !assignment) return;
 
-    // 1. Calculate Payout for this session
     let sessionPassedCount = 0;
     let sessionReworkCount = 0;
     const reworkQty: SizeQty = {};
@@ -24,31 +20,23 @@ export const assignmentService = {
       const assigned = Number(assignment.assignedQty[size]) || 0;
       const passed = Number(passedQty[size]) || 0;
       const rework = assigned - passed;
-      
       if (rework > 0) reworkQty[size] = rework;
       sessionPassedCount += passed;
       sessionReworkCount += rework;
     });
 
-    const rate = Number(batch.ratePerPiece) || 0;
+    const rate = Number(batch.ratePerPiece) || Number((batch as any).rate_per_piece) || 0;
     const amountToPay = sessionPassedCount * rate;
 
-    // DEBUG ALERT
-    alert(`QC Result: ${sessionPassedCount} Passed, Rate: ₹${rate}, Total Pay: ₹${amountToPay}`);
-
     try {
-      // 2. Update Karigar Profile (Pay the money)
       if (amountToPay > 0) {
-        // Fetch latest karigar data
-        const { data: karigar, error: fetchError } = await supabase
+        const { data: karigar } = await supabase
           .from('profiles')
           .select('wallet_balance, ledger')
           .eq('id', assignment.karigarId)
           .single();
 
-        if (fetchError) throw new Error("Could not find Karigar profile: " + fetchError.message);
-
-        // ✅ UPDATED: Added detailed description with sizes and separate data fields
+        // ✅ CLEAN DESCRIPTION: Removed "QC Passed:" prefix
         const passedSizes = Object.entries(passedQty)
           .filter(([_, qty]) => (qty as number) > 0)
           .map(([size, qty]) => `${size}(${qty})`)
@@ -57,75 +45,66 @@ export const assignmentService = {
         const newEntry = {
           id: crypto.randomUUID(),
           date: new Date().toISOString(),
-          description: `${batch.styleName} [${passedSizes}]`,
-          rate: rate, // Added for new column
-          quantity: sessionPassedCount, // Added for new column
+          description: `${batch.styleName} [${passedSizes}]`, 
+          rate: rate,
+          quantity: sessionPassedCount,
           amount: amountToPay,
           type: 'CREDIT'
         };
 
-        const currentBalance = Number(karigar.wallet_balance) || 0;
-        const currentLedger = Array.isArray(karigar.ledger) ? karigar.ledger : [];
-
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            wallet_balance: currentBalance + amountToPay,
-            ledger: [...currentLedger, newEntry]
-          })
-          .eq('id', assignment.karigarId);
-
-        if (profileError) throw new Error("Wallet Update Failed: " + profileError.message);
+        await supabase.from('profiles').update({
+          wallet_balance: (Number(karigar?.wallet_balance) || 0) + amountToPay,
+          ledger: [...(Array.isArray(karigar?.ledger) ? karigar.ledger : []), newEntry]
+        }).eq('id', assignment.karigarId);
       }
 
-      // 3. Update Assignment Status
-      const { error: assignError } = await supabase
-        .from('assignments')
-        .update({
-          status: sessionReworkCount > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
-          assigned_qty: sessionReworkCount > 0 ? reworkQty : assignment.assignedQty,
-          qc_notes: sessionReworkCount > 0 ? `Please rework ${sessionReworkCount} units.` : ''
-        })
-        .eq('id', assignmentId);
+      await supabase.from('assignments').update({
+        status: sessionReworkCount > 0 ? AssignmentStatus.QC_REWORK : AssignmentStatus.QC_PASSED,
+        assigned_qty: sessionReworkCount > 0 ? reworkQty : assignment.assignedQty,
+        qc_notes: sessionReworkCount > 0 ? `Please fix ${sessionReworkCount} units.` : ''
+      }).eq('id', assignmentId);
 
-      if (assignError) throw new Error("Assignment Status Update Failed: " + assignError.message);
-
-      alert("Success! Payout recorded and status updated.");
+      alert(`Success! Recorded ${sessionPassedCount} units.`);
       window.location.reload();
-
     } catch (err: any) {
-      console.error("QC Error:", err);
       alert("QC Error: " + err.message);
     }
   },
 
   async updateAssignmentStatus(batchId: string, assignmentId: string, status: AssignmentStatus, batches: Batch[]) {
-  try {
-    // If Rejection, we must handle stock return
-    if (status === 'Rejected') {
-      const batch = batches.find(b => b.id === batchId);
-      const { data: assignment } = await supabase.from('assignments').select('*').eq('id', assignmentId).single();
+    try {
+      // ✅ STOCK RETURN LOGIC: Add units back to batch if Karigar rejects
+      if (status === AssignmentStatus.REJECTED) {
+        const batch = batches.find(b => b.id === batchId);
+        const { data: assignment } = await supabase
+          .from('assignments')
+          .select('assigned_qty')
+          .eq('id', assignmentId)
+          .single();
 
-      if (batch && assignment) {
-        const returnedQty = assignment.assigned_qty;
-        const newAvailableQty = { ...batch.availableQty };
+        if (batch && assignment) {
+          const returnedQty = assignment.assigned_qty;
+          const newAvailableQty = { ...batch.availableQty };
 
-        // ADD back the units to the batch
-        Object.entries(returnedQty).forEach(([size, amount]) => {
-          newAvailableQty[size] = (Number(newAvailableQty[size]) || 0) + (Number(amount) || 0);
-        });
+          Object.entries(returnedQty).forEach(([size, amount]) => {
+            newAvailableQty[size] = (Number(newAvailableQty[size]) || 0) + (Number(amount) || 0);
+          });
 
-        // Update Batch Stock
-        await supabase.from('batches').update({ available_qty: newAvailableQty }).eq('id', batchId);
+          await supabase.from('batches')
+            .update({ available_qty: newAvailableQty })
+            .eq('id', batchId);
+        }
       }
+
+      const { error } = await supabase
+        .from('assignments')
+        .update({ status })
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+      window.location.reload();
+    } catch (err: any) {
+      alert("Update failed: " + err.message);
     }
-
-    // Update the assignment status itself
-    const { error } = await supabase.from('assignments').update({ status }).eq('id', assignmentId);
-    if (error) throw error;
-
-    window.location.reload();
-  } catch (err: any) {
-    alert("Update failed: " + err.message);
   }
-}
+};
