@@ -1,6 +1,6 @@
 /**
  * components/shared/AssignToKarigarModal.tsx
- * STATUS: UPDATED with Increased Font Sizes & Cleaned UI ✅
+ * STATUS: FIXED (Image Mapping + Vertical Card UI) ✅
  */
 
 import React, { useState } from 'react';
@@ -61,37 +61,42 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
     >
       <div className="space-y-4">
         
-        {/* STEP 1: KARIGAR SELECTION */}
+        {/* STEP 1: KARIGAR SELECTION (VERTICAL CARDS) */}
         {step === 1 && (
           <div className="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto p-1">
             {karigars.length === 0 ? (
               <p className="text-center text-gray-500 py-4">No Karigars found.</p>
             ) : (
-              karigars.map(k => (
-                <div 
-                  key={k.id}
-                  onClick={() => handleSelectKarigar(k)}
-                  className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:border-blue-500 transition-all cursor-pointer group active:scale-95"
-                >
-                  <div className="flex flex-col items-center p-6">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-50 mb-3 shadow-md">
-                      {k.avatarUrl ? (
-                        <img src={k.avatarUrl} className="w-full h-full object-cover" alt={k.name} />
-                      ) : (
-                        <div className="w-full h-full bg-blue-100 flex items-center justify-center text-blue-600">
-                          <UserIcon size={40} />
-                        </div>
-                      )}
+              karigars.map(k => {
+                // ✅ FIX: Map both avatarUrl and avatar_url
+                const kAvatar = k.avatarUrl || (k as any).avatar_url;
+                
+                return (
+                  <div 
+                    key={k.id}
+                    onClick={() => handleSelectKarigar(k)}
+                    className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:border-blue-500 transition-all cursor-pointer group active:scale-95"
+                  >
+                    <div className="flex flex-col items-center p-6">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-50 mb-3 shadow-md bg-gray-100">
+                        {kAvatar ? (
+                          <img src={kAvatar} className="w-full h-full object-cover" alt={k.name} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300">
+                            <UserIcon size={40} />
+                          </div>
+                        )}
+                      </div>
+                      <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {k.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">
+                        Tap to select
+                      </p>
                     </div>
-                    <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {k.name}
-                    </h4>
-                    <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">
-                      Tap to select
-                    </p>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -104,18 +109,25 @@ export const AssignToKarigarModal: React.FC<AssignToKarigarModalProps> = ({
               <button onClick={handleBack} className="p-2 hover:bg-white rounded-full transition-colors">
                 <ChevronLeft size={24} className="text-gray-600" />
               </button>
-              <img 
-                src={selectedKarigar.avatarUrl || 'https://i.pravatar.cc/150'} 
-                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" 
-                alt="" 
-              />
+              {/* ✅ FIX: Map both for the header preview too */}
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-200">
+                {(selectedKarigar.avatarUrl || (selectedKarigar as any).avatar_url) ? (
+                  <img 
+                    src={selectedKarigar.avatarUrl || (selectedKarigar as any).avatar_url} 
+                    className="w-full h-full object-cover" 
+                    alt="" 
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <UserIcon size={20} />
+                  </div>
+                )}
+              </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase font-bold">Assigning to</p>
                 <h4 className="text-lg font-black text-gray-900 leading-none">{selectedKarigar.name}</h4>
               </div>
             </div>
-
-            {/* Note: Available Stock summary (blue box) removed as per request */}
 
             {/* Quantity Inputs */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-8 max-h-[45vh] overflow-y-auto pr-1">
