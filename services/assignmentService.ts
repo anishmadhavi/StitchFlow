@@ -57,7 +57,7 @@ export const assignmentService = {
         const newEntry = {
           id: crypto.randomUUID(),
           date: new Date().toISOString(),
-          description: `QC Passed: ${batch.styleName} [${passedSizes}]`,
+          description: `${batch.styleName} [${passedSizes}]`,
           rate: rate, // Added for new column
           quantity: sessionPassedCount, // Added for new column
           amount: amountToPay,
