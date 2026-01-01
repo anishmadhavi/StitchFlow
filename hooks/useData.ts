@@ -1,6 +1,6 @@
 /**
  * hooks/useData.ts
- * Purpose: Manages data fetching and real-time subscriptions
+ * STATUS: FIXED (Added Snake_case -> CamelCase mapping) ✅
  */
 
 import { useState, useEffect } from 'react';
@@ -21,13 +21,13 @@ export function useData(currentUser: User | null) {
     const fetchData = async () => {
       setDataLoading(true);
       try {
-        // Fetch Profiles (Users)
+        // 1. Fetch Profiles
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*');
 
-        // Fetch Batches with their Assignments (Nested join)
-        const { data: batches, error: batchesError } = await supabase
+        // 2. Fetch Batches with Assignments
+        const { data: rawBatches, error: batchesError } = await supabase
           .from('batches')
           .select('*, assignments(*)')
           .order('created_at', { ascending: false });
@@ -35,11 +35,36 @@ export function useData(currentUser: User | null) {
         if (profilesError) console.error('Profiles fetch error:', profilesError);
         if (batchesError) console.error('Batches fetch error:', batchesError);
         
+        // 3. Map Users (Profiles)
+        // If your DB uses snake_case for profile fields, map them here if needed.
+        // Assuming profiles columns match User type mostly, or are handled loosely.
         setUsers(profiles || []);
-        setBatches((batches || []).map(batch => ({
-          ...batch,
-          assignments: batch.assignments || []
-        })));
+
+        // 4. ✅ FIX: Map Batches (Snake_case -> CamelCase)
+        const formattedBatches = (rawBatches || []).map((b: any) => ({
+          ...b,
+          // Map Database Columns -> UI Properties
+          styleName: b.style_name,      // 👈 Critical Fix
+          ratePerPiece: b.rate_per_piece,
+          imageUrl: b.image_url,
+          plannedQty: b.planned_qty,    // 👈 Critical Fix (Prevents Crash)
+          actualCutQty: b.actual_cut_qty,
+          availableQty: b.available_qty,
+          
+          // Map Nested Assignments
+          assignments: (b.assignments || []).map((a: any) => ({
+            ...a,
+            batchId: a.batch_id,
+            karigarId: a.karigar_id,
+            karigarName: a.karigar_name,
+            assignedQty: a.assigned_qty,
+            assignedAt: a.assigned_at,
+            qcNotes: a.qc_notes
+          }))
+        }));
+
+        setBatches(formattedBatches);
+
       } catch (error) {
         console.error('Data fetch error:', error);
       } finally {
@@ -49,46 +74,35 @@ export function useData(currentUser: User | null) {
 
     fetchData();
 
-    // Setup Real-time Subscription for Profiles
+    // --- Real-time Subscriptions (Keep these as they were) ---
     const profilesChannel = supabase
       .channel('profiles-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'profiles' }, 
-        (payload) => {
-          console.log('🔄 Profile changed:', payload);
-          fetchData();
-        }
+        () => fetchData() // Simple reload on change
       )
       .subscribe();
 
-    // Setup Real-time Subscription for Batches
     const batchesChannel = supabase
       .channel('batches-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'batches' }, 
-        (payload) => {
-          console.log('🔄 Batch changed:', payload);
-          fetchData();
-        }
+        () => fetchData()
       )
       .subscribe();
 
-    // Setup Real-time Subscription for Assignments
     const assignmentsChannel = supabase
       .channel('assignments-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'assignments' }, 
-        (payload) => {
-          console.log('🔄 Assignment changed:', payload);
-          fetchData();
-        }
+        () => fetchData()
       )
       .subscribe();
 
     return () => { 
-      supabase.removeChannel(profilesChannel).catch(err => console.error('Channel cleanup error:', err));
-      supabase.removeChannel(batchesChannel).catch(err => console.error('Channel cleanup error:', err));
-      supabase.removeChannel(assignmentsChannel).catch(err => console.error('Channel cleanup error:', err));
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(batchesChannel);
+      supabase.removeChannel(assignmentsChannel);
     };
   }, [currentUser]);
 
