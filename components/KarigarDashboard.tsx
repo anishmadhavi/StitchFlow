@@ -44,8 +44,10 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   );
 
   const passbookEntries = useMemo(() => {
-    return (currentUser.ledger ?? []).slice().reverse();
-  }, [currentUser.ledger]);
+  // ✅ CHECK BOTH NAMES: Frontend 'ledger' or Database 'u.ledger'
+  const ledger = currentUser.ledger || (currentUser as any).ledger || [];
+  return [...ledger].slice().reverse();
+}, [currentUser]);
 
   const calculateTotalQty = (qty: SizeQty) => Object.values(qty).reduce((sum, val) => (sum as number) + (val as number), 0);
   const isAdvance = (currentUser.walletBalance ?? 0) < 0;
