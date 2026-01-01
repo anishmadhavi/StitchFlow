@@ -16,7 +16,7 @@
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleForceLogout, App
+> App, handleForceLogout
 
 #### 📄 batchService.ts
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -46,25 +46,25 @@
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handleOpenQCModal, activeBatches, pendingCuttingBatches, pendingQCItems, handleOpenCutModal, handleOpenAssignModal
+> handleOpenQCModal, pendingCuttingBatches, handleOpenAssignModal, activeBatches, pendingQCItems, handleOpenCutModal
 
 #### 📄 AdminDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> getActiveAssignments, activeBatches, staffUsers, handleOpenPassbook, handleOpenAssignModal, handleOpenBatchDetails
+> staffUsers, handleOpenPassbook, handleOpenAssignModal, handleOpenBatchDetails, activeBatches, getActiveAssignments
 
 #### 📄 MasterDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> pendingBatches, assignableBatches, handleOpenCutModal, handleOpenAssignModal, calculateTotalAvailable
+> assignableBatches, pendingBatches, handleOpenAssignModal, handleOpenCutModal, calculateTotalAvailable
 
 #### 📄 KarigarDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> handlePhotoUpload, calculateTotalQty, isAdvance
+> handlePhotoUpload, isAdvance, calculateTotalQty
 
 #### 📄 QCDashboard.tsx
 **Purpose:** Main administrative interface for managing data and items.
@@ -82,7 +82,7 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> handleCreateCategory, loadCategories, toggleSize, handleDeleteCategory, testConnection, handleSaveShopify, loadSettings
+> testConnection, loadCategories, handleDeleteCategory, loadSettings, toggleSize, handleCreateCategory, handleSaveShopify
 
 #### 📄 PassbookModal.tsx
 **Purpose:** General Component/Utility
@@ -136,7 +136,7 @@
 **Purpose:** Manages data fetching and external API communications.
 
 **Key Logic/Functions:**
-> handleCategoryChange, handleForceSubmit, handleShopifySync, fetchCategories, handleImageUpload
+> fetchCategories, handleImageUpload, handleCategoryChange, handleForceSubmit, handleShopifySync
 
 #### 📄 CuttingModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
@@ -148,25 +148,25 @@
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleSubmit, handleQtyChange
+> handleQtyChange, handleSubmit
 
 #### 📄 AssignToKarigarModal.tsx
 **Purpose:** Production logic for garment manufacturing and assignment.
 
 **Key Logic/Functions:**
-> handleSelectKarigar, handleSubmit, handleBack
+> handleBack, handleSelectKarigar, handleSubmit
 
 #### 📄 useData.ts
 **Purpose:** Main administrative interface for managing data and items.
 
 **Key Logic/Functions:**
-> formattedBatches, useData, formattedUsers
+> formattedUsers, formattedBatches, useData
 
 #### 📄 useAuth.ts
 **Purpose:** Handles user authentication and security flows.
 
 **Key Logic/Functions:**
-> handleLogout, initializeAuth, handleSignUp, handleLogin, loadProfile, useAuth
+> useAuth, handleLogout, handleLogin, initializeAuth, handleSignUp, loadProfile
 
 #### 📄 supabaseClient.ts
 **Purpose:** Handles user authentication and security flows.
