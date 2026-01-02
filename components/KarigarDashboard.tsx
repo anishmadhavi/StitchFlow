@@ -163,26 +163,20 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
               </div>
               
               <div className="bg-gray-50 p-3 border-t flex gap-3">
-                {item.status === AssignmentStatus.ASSIGNED ? (
-                  <>
-                    <button 
-                      className="flex-1 py-4 bg-white border-2 border-red-500 text-red-600 font-bold rounded-xl active:scale-95 transition-all"
-                      onClick={async () => {
-                      // ✅ ADDED BATCHES: The service now needs the full batches list to calculate stock return
-                         await onRejectAssignment(item.batch.id, item.id, batches);
-                      }}
-                    >
-                     Reject
-                   </button>
-                    <button 
-                      className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl active:scale-95 transition-all"
-                      onClick={async () => {
-                         await onAcceptAssignment(item.batch.id, item.id);
-                         window.location.reload();
-                      }}
-                    >
-                      Accept Job
-                    </button>
+  {item.status === AssignmentStatus.ASSIGNED ? (
+    <>
+      <button 
+        className="flex-1 py-4 bg-white border-2 border-red-500 text-red-600 font-bold rounded-xl active:scale-95 transition-all"
+        onClick={() => onRejectAssignment(item.batch.id, item.id)}
+      >
+       Reject
+     </button>
+      <button 
+        className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl active:scale-95 transition-all"
+        onClick={() => onAcceptAssignment(item.batch.id, item.id)}
+      >
+        Accept Job
+      </button>
                   </>
                 ) : (
                   <button 
