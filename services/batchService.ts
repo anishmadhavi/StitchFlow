@@ -7,20 +7,22 @@ import { Batch, SizeQty, User } from '../types';
 
 export const batchService = {
   async createBatch(batchData: Partial<Batch>) {
-    const { error } = await supabase
-      .from('batches')
-      .insert([{
-        style_name: batchData.styleName,
-        sku: batchData.sku,
-        image_url: batchData.imageUrl,
-        rate_per_piece: batchData.ratePerPiece,
-        planned_qty: batchData.plannedQty,
-        available_qty: batchData.plannedQty,
-        status: 'Pending Material'
-      }]);
+  const { error } = await supabase
+    .from('batches')
+    .insert([{
+      style_name: batchData.styleName,
+      // ✅ ADDED: Save category to database
+      category: batchData.category, 
+      sku: batchData.sku,
+      image_url: batchData.imageUrl,
+      rate_per_piece: batchData.ratePerPiece,
+      planned_qty: batchData.plannedQty,
+      available_qty: batchData.plannedQty,
+      status: 'Pending Material'
+    }]);
 
-    if (error) alert("Error creating batch: " + error.message);
-  },
+  if (error) alert("Error creating batch: " + error.message);
+},
 
   async deleteBatch(batchId: string) {
     if (!confirm("Are you sure you want to delete this batch?")) return;
