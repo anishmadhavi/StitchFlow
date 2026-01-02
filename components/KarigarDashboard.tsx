@@ -145,54 +145,83 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
           <h3 className="font-semibold text-gray-900 px-1">Active Tasks</h3>
           {activeJobs.length === 0 && <p className="text-gray-500 text-center py-8">No active jobs assigned to you.</p>}
           {activeJobs.map(item => (
-            <Card key={item.id} className="p-0 overflow-hidden border-2 border-gray-100">
-              <div className="p-4 flex gap-4">
-                <img src={item.batch.imageUrl} className="w-24 h-24 rounded bg-gray-100 object-cover" alt="" />
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-gray-900 text-lg">{item.batch.styleName}</h4>
-                    <Badge color={item.status === AssignmentStatus.ASSIGNED ? 'blue' : 'yellow'}>{item.status}</Badge>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1 font-bold">Total: {calculateTotalQty(item.assignedQty)} Pcs</p>
-                  <div className="flex flex-wrap gap-2 text-xs mt-2 font-mono">
-                    {Object.entries(item.assignedQty).filter(([_,v]) => (v as number) > 0).map(([k,v]) => (
-                      <span key={k} className="border bg-gray-50 px-2 py-0.5 rounded-md font-bold">{k}: {v as number}</span>
-                    ))}
-                  </div>
-                </div>
+  <Card key={item.id} className="p-0 overflow-hidden border-2 border-gray-100 shadow-md">
+    {/* 1. Large Visual Design Header */}
+    <div className="relative aspect-[4/5] bg-gray-100">
+      <img 
+        src={item.batch.imageUrl} 
+        className="w-full h-full object-cover" 
+        alt={item.batch.styleName} 
+      />
+      <div className="absolute top-3 right-3">
+        <Badge color={item.status === AssignmentStatus.ASSIGNED ? 'blue' : 'yellow'} className="shadow-sm">
+          {item.status}
+        </Badge>
+      </div>
+    </div>
+
+    {/* 2. Batch Details */}
+    <div className="p-5">
+      <div className="flex justify-between items-end mb-3">
+        <div>
+          <h4 className="font-black text-gray-900 text-xl uppercase tracking-tight leading-none">
+            {item.batch.styleName}
+          </h4>
+          <p className="text-sm text-gray-500 mt-2 font-bold uppercase tracking-wider">
+            Job Allocation
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-400 font-bold uppercase">Total Qty</p>
+          <p className="text-2xl font-black text-blue-600">{calculateTotalQty(item.assignedQty)}</p>
+        </div>
+      </div>
+
+      {/* Size Breakdown */}
+      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+        <p className="text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Required Sizes</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(item.assignedQty)
+            .filter(([_, v]) => (v as number) > 0)
+            .map(([k, v]) => (
+              <div key={k} className="bg-white border-2 border-gray-200 px-3 py-1 rounded-lg flex items-center gap-2">
+                <span className="text-xs font-black text-gray-900">{k}</span>
+                <span className="w-[1px] h-3 bg-gray-200" />
+                <span className="text-xs font-black text-blue-600">{v as number}</span>
               </div>
-              
-              <div className="bg-gray-50 p-3 border-t flex gap-3">
-  {item.status === AssignmentStatus.ASSIGNED ? (
-    <>
-      <button 
-        className="flex-1 py-4 bg-white border-2 border-red-500 text-red-600 font-bold rounded-xl active:scale-95 transition-all"
-        onClick={() => onRejectAssignment(item.batch.id, item.id)}
-      >
-       Reject
-     </button>
-      <button 
-        className="flex-1 py-4 bg-green-600 text-white font-bold rounded-xl active:scale-95 transition-all"
-        onClick={() => onAcceptAssignment(item.batch.id, item.id)}
-      >
-        Accept Job
-      </button>
-                  </>
-                ) : (
-                  <button 
-                    className="w-full py-4 bg-blue-600 text-white font-black rounded-xl text-lg shadow-lg active:scale-95 transition-all uppercase tracking-widest"
-                    onClick={async () => {
-                       await onMarkComplete(item.batch.id, item.id);
-                       alert("Sent to QC Team!");
-                       window.location.reload(); 
-                    }}
-                  >
-                    Mark as Stitched
-                  </button>
-                )}
-              </div>
-            </Card>
-          ))}
+            ))}
+        </div>
+      </div>
+    </div>
+    
+    {/* 3. Action Buttons */}
+    <div className="p-4 pt-0 flex gap-3">
+      {item.status === AssignmentStatus.ASSIGNED ? (
+        <>
+          <button 
+            className="flex-1 py-4 bg-white border-2 border-red-500 text-red-600 font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-sm"
+            onClick={() => onRejectAssignment(item.batch.id, item.id)}
+          >
+            Reject
+          </button>
+          <button 
+            className="flex-1 py-4 bg-green-600 text-white font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-lg border-b-4 border-green-800"
+            onClick={() => onAcceptAssignment(item.batch.id, item.id)}
+          >
+            Accept Job
+          </button>
+        </>
+      ) : (
+        <button 
+          className="w-full py-5 bg-blue-600 text-white font-black rounded-xl text-lg shadow-xl active:scale-95 transition-all uppercase tracking-[0.2em] border-b-4 border-blue-800"
+          onClick={() => onMarkComplete(item.batch.id, item.id)}
+        >
+          Mark as Stitched
+        </button>
+      )}
+    </div>
+  </Card>
+))}
         </div>
       )}
 
