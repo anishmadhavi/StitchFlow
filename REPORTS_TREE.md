@@ -31,6 +31,8 @@
 │       ├── CreateBatchModal.tsx
 │       ├── CuttingModal.tsx
 │       └── QCInspectionModal.tsx
+├── constants
+│   └── categories.ts
 ├── constants.ts
 ├── hooks
 │   ├── useAuth.ts
@@ -49,5 +51,5 @@
 ├── types.ts
 └── vite.config.ts
 
-10 directories, 38 files
+11 directories, 39 files
 ```
