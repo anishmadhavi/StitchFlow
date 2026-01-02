@@ -148,15 +148,15 @@ const mappedUser = users.find(u => u.id === currentUser?.id) || currentUser;
         )}
 
         {currentUser.role === Role.KARIGAR && (
-          <KarigarDashboard 
-            currentUser={mappedUser as User}
-            batches={batches}
-            onAcceptAssignment={(_, aId) => assignmentService.updateAssignmentStatus(aId, AssignmentStatus.ACCEPTED)}
-            onRejectAssignment={(_, aId) => assignmentService.updateAssignmentStatus(aId, AssignmentStatus.REJECTED)}
-            onMarkComplete={(_, aId) => assignmentService.updateAssignmentStatus(aId, AssignmentStatus.STITCHED)}
-            onUpdateUser={userService.updateUser}
-          />
-        )}
+  <KarigarDashboard 
+    currentUser={mappedUser as User}
+    batches={batches}
+    onAcceptAssignment={(bId, aId) => assignmentService.updateAssignmentStatus(bId, aId, AssignmentStatus.ACCEPTED, batches)}
+    onRejectAssignment={(bId, aId) => assignmentService.updateAssignmentStatus(bId, aId, AssignmentStatus.REJECTED, batches)}
+    onMarkComplete={(bId, aId) => assignmentService.updateAssignmentStatus(bId, aId, AssignmentStatus.STITCHED, batches)}
+    onUpdateUser={userService.updateUser}
+  />
+)}
 
         {currentUser.role === Role.QC && (
           <QCDashboard 
