@@ -66,32 +66,42 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
     type: file.type
   });
 
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Photo too large! Maximum 5MB allowed.");
+    return;
+  }
+
   setIsUploading(true);
-  const filePath = `avatars/${currentUser.id}.jpg`;
+  
+  // Use timestamp to ensure unique filename
+  const timestamp = Date.now();
+  const filePath = `avatars/${currentUser.id}_${timestamp}.jpg`;
 
   try {
-    // Step 1: Upload to Storage
-    console.log('DEBUG: Uploading to storage...', filePath);
-    const { error: uploadError } = await supabase.storage
+    console.log('DEBUG: Step 1 - Uploading to storage...', filePath);
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('designs')
-      .upload(filePath, file, { upsert: true });
+      .upload(filePath, file, { 
+        upsert: false // Don't upsert, create new file
+      });
 
     if (uploadError) {
       console.error('DEBUG: Upload error:', uploadError);
       throw new Error('Upload failed: ' + uploadError.message);
     }
-    console.log('DEBUG: Upload successful');
+    
+    console.log('DEBUG: Upload successful:', uploadData);
 
-    // Step 2: Get Public URL
-    console.log('DEBUG: Getting public URL...');
+    console.log('DEBUG: Step 2 - Getting public URL...');
     const { data: { publicUrl } } = supabase.storage
       .from('designs')
       .getPublicUrl(filePath);
     
     console.log('DEBUG: Public URL:', publicUrl);
 
-    // Step 3: Update Database
-    console.log('DEBUG: Updating database...');
+    console.log('DEBUG: Step 3 - Updating database...');
     const { data: updateData, error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: publicUrl })
@@ -103,23 +113,32 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
       throw new Error('Database update failed: ' + updateError.message);
     }
 
-    console.log('DEBUG: Database updated:', updateData);
+    console.log('DEBUG: Database updated successfully:', updateData);
 
-    // Step 4: Update Local State
-    console.log('DEBUG: Updating local state...');
-    onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
+    // Delete old avatar if it exists (cleanup)
+    if (userAvatar && userAvatar.includes('avatars/')) {
+      const oldPath = userAvatar.split('/').pop();
+      if (oldPath && oldPath !== `${currentUser.id}_${timestamp}.jpg`) {
+        await supabase.storage.from('designs').remove([`avatars/${oldPath}`]);
+        console.log('DEBUG: Old avatar deleted');
+      }
+    }
 
-    console.log('DEBUG: Photo update complete!');
-    alert("Photo updated successfully! ✅");
+    console.log('DEBUG: SUCCESS - Photo updated!');
+    alert("✅ Photo updated successfully!");
     
-    // Reload to show new photo
+    // Force state update before reload
+    onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
+    
+    // Delay reload to ensure state updates
     setTimeout(() => {
+      console.log('DEBUG: Reloading page...');
       window.location.reload();
-    }, 500);
+    }, 1000);
 
   } catch (err: any) {
-    console.error('DEBUG: Photo upload failed:', err);
-    alert("❌ Photo upload failed!\n\nError: " + err.message + "\n\nCheck console for details.");
+    console.error('DEBUG: FAILED:', err);
+    alert(`❌ Photo upload failed!\n\n${err.message}\n\nPlease try again.`);
   } finally {
     setIsUploading(false);
   }
