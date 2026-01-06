@@ -1,5 +1,6 @@
 /**
  * components/admin/StaffTab.tsx
+ * STATUS: UPDATED with Safe PIN Update ✅
  * Purpose: Staff management interface for Admin
  */
 
@@ -7,6 +8,7 @@ import React from 'react';
 import { UserPlus, Trash2, Phone, Key, Briefcase } from 'lucide-react';
 import { User, Role, Assignment } from '../../types';
 import { Button, Card, Badge } from '../Shared';
+import { userService } from '../../services/userService';
 
 interface StaffTabProps {
   staffUsers: User[];
@@ -58,27 +60,27 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                     </Badge>
                   </div>
                 </div>
-<button 
-  onClick={async (e) => {
-    e.stopPropagation();
-    console.log('🗑️ Delete clicked for:', user.name, user.id);
-    if (window.confirm(`Delete ${user.name}?`)) {
-      console.log('✅ Confirmed, calling onDeleteUser');
-      try {
-        await onDeleteUser(user.id);
-        console.log('✅ Delete completed');
-        alert('Staff deleted successfully!');
-        window.location.reload();
-      } catch (error) {
-        console.error('❌ Delete failed:', error);
-        alert('Error deleting staff: ' + error);
-      }
-    }
-  }} 
-  className="text-gray-400 hover:text-red-600 transition-colors p-1"
->
-  <Trash2 size={16} />
-</button>
+                <button 
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    console.log('🗑️ Delete clicked for:', user.name, user.id);
+                    if (window.confirm(`Delete ${user.name}?`)) {
+                      console.log('✅ Confirmed, calling onDeleteUser');
+                      try {
+                        await onDeleteUser(user.id);
+                        console.log('✅ Delete completed');
+                        alert('Staff deleted successfully!');
+                        window.location.reload();
+                      } catch (error) {
+                        console.error('❌ Delete failed:', error);
+                        alert('Error deleting staff: ' + error);
+                      }
+                    }
+                  }} 
+                  className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
 
               {/* Login Credentials - PASSWORD VISIBLE */}
@@ -101,16 +103,30 @@ export const StaffTab: React.FC<StaffTabProps> = ({
                     placeholder="123456"
                   />
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const input = document.getElementById(`pin-${user.id}`) as HTMLInputElement;
                       const newPin = input?.value;
-                      if (newPin && newPin.length === 6 && onUpdateUser) {
-                        if (window.confirm(`Update PIN for ${user.name} to ${newPin}?`)) {
-                          onUpdateUser(user.id, { displayPin: newPin, pin: newPin });
-                          alert('PIN updated successfully!');
+                      
+                      if (!newPin || newPin.length < 4) {
+                        alert('PIN must be at least 4 digits');
+                        return;
+                      }
+
+                      if (window.confirm(`Update Login PIN for ${user.name} to ${newPin}?`)) {
+                        try {
+                          // 1. Call Secure Edge Function
+                          await userService.updatePin(user.id, newPin);
+                          
+                          // 2. Update Local UI (so you see the change immediately)
+                          if (onUpdateUser) {
+                            onUpdateUser(user.id, { displayPin: newPin });
+                          }
+                          
+                          alert('✅ Success! Login Password & Visible PIN updated.');
+                        } catch (e: any) {
+                          console.error(e);
+                          alert('❌ Failed: ' + e.message);
                         }
-                      } else {
-                        alert('Please enter a valid 6-digit PIN');
                       }
                     }}
                     className="text-xs bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded border border-yellow-400"
