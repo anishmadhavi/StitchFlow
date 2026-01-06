@@ -1,13 +1,14 @@
 /**
  * components/KarigarDashboard.tsx
- * STATUS: UPDATED (Added Detailed Passbook Table) ✅
+ * STATUS: DEBUG MODE ENABLED 🐞
+ * Purpose: detailed debugging of mobile camera upload issues
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '../src/supabaseClient';
-import { BookOpen, CheckCircle, XCircle, Shirt, AlertOctagon, Camera, User as UserIcon } from 'lucide-react';
-import { Batch, Assignment, User, AssignmentStatus, SizeQty } from '../types';
-import { Button, Card, Badge } from './Shared';
+import { Camera, User as UserIcon } from 'lucide-react';
+import { Batch, User, AssignmentStatus, SizeQty } from '../types';
+import { Card, Badge } from './Shared';
 import { format } from 'date-fns';
 
 interface KarigarDashboardProps {
@@ -29,14 +30,40 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'jobs' | 'passbook'>('jobs');
   const [isUploading, setIsUploading] = useState(false);
+  
+  // 🐞 DEBUG STATE: Stores logs to show on screen
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const componentId = useRef(Math.random().toString(36).slice(2, 7)); // Track if component remounts
 
-  // Helper to handle the snake_case vs camelCase image issue
+  // 📝 Helper to add logs to the on-screen console
+  const log = (msg: string) => {
+    const time = new Date().toISOString().split('T')[1].slice(0, 8); // HH:MM:SS
+    setDebugLogs(prev => [`[${time}] ${msg}`, ...prev]);
+    console.log(`[DEBUG] ${msg}`);
+  };
+
+  // 🕵️ Monitor Component Lifecycle
+  useEffect(() => {
+    log(`🚀 Dashboard Mounted (Instance: ${componentId.current})`);
+    log(`👤 User ID: ${currentUser.id.slice(0, 5)}...`);
+    
+    return () => {
+      // If this logs during upload, it proves the component is being killed!
+      console.log(`[DEBUG] 💀 Dashboard Unmounting (Instance: ${componentId.current})`);
+    };
+  }, []);
+
+  // 🕵️ Monitor Auth/User Changes
+  useEffect(() => {
+    if (isUploading) {
+      log(`⚠️ User prop updated while uploading!`);
+    }
+  }, [currentUser]);
+
+  // Helper variables
   const userAvatar = currentUser.avatarUrl || (currentUser as any).avatar_url;
-
   const myAssignments = batches.flatMap(b => 
-    (b.assignments || [])
-      .filter(a => a.karigarId === currentUser.id)
-      .map(a => ({ ...a, batch: b }))
+    (b.assignments || []).filter(a => a.karigarId === currentUser.id).map(a => ({ ...a, batch: b }))
   ).sort((a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime());
 
   const activeJobs = myAssignments.filter(a => 
@@ -44,7 +71,6 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   );
 
   const passbookEntries = useMemo(() => {
-    // ✅ CHECK BOTH NAMES: Frontend 'ledger' or Database 'u.ledger'
     const ledger = currentUser.ledger || (currentUser as any).ledger || [];
     return [...ledger].slice().reverse();
   }, [currentUser]);
@@ -52,113 +78,89 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   const calculateTotalQty = (qty: SizeQty) => Object.values(qty).reduce((sum, val) => (sum as number) + (val as number), 0);
   const isAdvance = (currentUser.walletBalance ?? 0) < 0;
 
-  // --- Profile Photo Handler ---
+  // --- 📸 DEBUGGED PHOTO UPLOAD HANDLER ---
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) {
-    console.log('DEBUG: No file selected');
-    return;
-  }
-
-  console.log('DEBUG: Original file:', {
-    name: file.name,
-    size: file.size,
-    type: file.type
-  });
-
-  // Validate file size (max 5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    alert("Photo too large! Maximum 5MB allowed.");
-    return;
-  }
-
-  // Validate file type
-  if (!file.type.startsWith('image/')) {
-    alert("Please select a valid image file!");
-    return;
-  }
-
-  setIsUploading(true);
-  
-  // 🔒 SET UPLOAD LOCK TO PREVENT AUTH INTERFERENCE
-  localStorage.setItem('upload_in_progress', 'true');
-  console.log('DEBUG: 🔒 Upload lock enabled');
-  
-  const timestamp = Date.now();
-  const extension = file.type.split('/')[1] || 'jpg';
-  const cleanFilePath = `avatars/${currentUser.id}_${timestamp}.${extension}`;
-
-  console.log('DEBUG: Clean filename:', cleanFilePath);
-
-  try {
-    console.log('DEBUG: Step 1/4 - Uploading to storage...');
+    const file = e.target.files?.[0];
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('designs')
-      .upload(cleanFilePath, file, { 
-        upsert: false,
-        contentType: file.type
-      });
-
-    if (uploadError) {
-      console.error('DEBUG: Upload error:', uploadError);
-      throw new Error('Upload: ' + uploadError.message);
-    }
+    // Clear previous logs for clarity
+    setDebugLogs([`[${new Date().toISOString().split('T')[1]}] 🎬 Starting Upload Process...`]);
     
-    console.log('DEBUG: ✅ Step 1 complete');
-
-    console.log('DEBUG: Step 2/4 - Getting public URL...');
-    const { data: { publicUrl } } = supabase.storage
-      .from('designs')
-      .getPublicUrl(cleanFilePath);
-    
-    console.log('DEBUG: ✅ Step 2 complete. URL:', publicUrl.substring(0, 50) + '...');
-
-    console.log('DEBUG: Step 3/4 - Updating database...');
-    const { data: updateData, error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', currentUser.id)
-      .select();
-
-    if (updateError) {
-      console.error('DEBUG: Database error:', updateError);
-      throw new Error('Database: ' + updateError.message);
+    if (!file) {
+      log('❌ No file selected (User cancelled?)');
+      return;
     }
 
-    console.log('DEBUG: ✅ Step 3 complete');
+    log(`📁 File detected: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`);
+    log(`Current Instance: ${componentId.current}`);
 
-    console.log('DEBUG: Step 4/4 - Finalizing...');
-    onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
+    setIsUploading(true);
+    
+    try {
+      const timestamp = Date.now();
+      const extension = file.type.split('/')[1] || 'jpg';
+      const cleanFilePath = `avatars/${currentUser.id}_${timestamp}.${extension}`;
 
-    console.log('DEBUG: ✅ ALL STEPS COMPLETE!');
-    
-    // 🔓 RELEASE LOCK
-    localStorage.removeItem('upload_in_progress');
-    console.log('DEBUG: 🔓 Upload lock released');
-    
-    alert("✅ Photo updated!");
-    
-    setTimeout(() => {
-      console.log('DEBUG: Reloading page...');
-      window.location.reload();
-    }, 800);
+      log(`🔹 Step 1: Uploading to Supabase Storage...`);
+      log(`👉 Path: ${cleanFilePath}`);
 
-  } catch (err: any) {
-    console.error('DEBUG: ❌ FAILED at some step:', err);
-    
-    // 🔓 RELEASE LOCK ON ERROR
-    localStorage.removeItem('upload_in_progress');
-    console.log('DEBUG: 🔓 Lock released (error)');
-    
-    alert(`❌ Upload failed!\n\n${err.message}`);
-  } finally {
-    setIsUploading(false);
-  }
-};
+      // 1. Upload
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('designs')
+        .upload(cleanFilePath, file, { 
+          upsert: false,
+          contentType: file.type
+        });
+
+      if (uploadError) {
+        log(`❌ Upload Error: ${uploadError.message}`);
+        throw uploadError;
+      }
+      log(`✅ Step 1 Success. Storage ID: ${(uploadData as any)?.path || 'ok'}`);
+
+      // 2. Get URL
+      log(`🔹 Step 2: Generating Public URL...`);
+      const { data: urlData } = supabase.storage
+        .from('designs')
+        .getPublicUrl(cleanFilePath);
+      
+      const publicUrl = urlData.publicUrl;
+      log(`✅ URL Generated: ${publicUrl.slice(0, 20)}...`);
+
+      // 3. Update DB
+      log(`🔹 Step 3: Updating Profile in DB...`);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', currentUser.id);
+
+      if (updateError) {
+        log(`❌ DB Error: ${updateError.message}`);
+        throw updateError;
+      }
+      log(`✅ Step 3 Success: DB Updated.`);
+
+      // 4. Update UI
+      log(`🔹 Step 4: Updating Local State...`);
+      onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
+      
+      log(`🎉 SUCCESS! Photo updated.`);
+      alert("✅ Photo Updated Successfully!");
+      
+      // Optional: reload to force refresh image
+      // window.location.reload(); 
+
+    } catch (err: any) {
+      log(`🔥 CRITICAL FAILURE: ${err.message || JSON.stringify(err)}`);
+      alert(`Upload Failed: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      log(`🏁 Process Ended.`);
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-40"> {/* Extra padding for debug console */}
+      
       {/* Karigar Header */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex items-center gap-4">
           <div className="relative shrink-0">
@@ -176,7 +178,7 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
                 <input 
                    type="file" 
                    accept="image/*" 
-                   capture="user" 
+                   // capture="user" // ⚠️ DISABLED 'capture' to prefer file picker over direct camera (often more stable)
                    className="hidden" 
                    onChange={handlePhotoUpload}
                    disabled={isUploading}
@@ -215,87 +217,83 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
           <h3 className="font-semibold text-gray-900 px-1">Active Tasks</h3>
           {activeJobs.length === 0 && <p className="text-gray-500 text-center py-8">No active jobs assigned to you.</p>}
           {activeJobs.map(item => (
-  <Card key={item.id} className="p-0 overflow-hidden border-2 border-gray-100 shadow-md">
-    {/* 1. Large Visual Design Header */}
-    <div className="relative aspect-[4/5] bg-gray-100">
-      <img 
-        src={item.batch.imageUrl} 
-        className="w-full h-full object-cover" 
-        alt={item.batch.styleName} 
-      />
-      <div className="absolute top-3 right-3">
-        <Badge color={item.status === AssignmentStatus.ASSIGNED ? 'blue' : 'yellow'} className="shadow-sm">
-          {item.status}
-        </Badge>
-      </div>
-    </div>
-
-    {/* 2. Batch Details */}
-    <div className="p-5">
-      <div className="flex justify-between items-end mb-3">
-        <div>
-          <h4 className="font-black text-gray-900 text-xl uppercase tracking-tight leading-none">
-            {item.batch.styleName}
-          </h4>
-          <p className="text-sm text-gray-500 mt-2 font-bold uppercase tracking-wider">
-            Job Allocation
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-400 font-bold uppercase">Total Qty</p>
-          <p className="text-2xl font-black text-blue-600">{calculateTotalQty(item.assignedQty)}</p>
-        </div>
-      </div>
-
-      {/* Size Breakdown */}
-      <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-        <p className="text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Required Sizes</p>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(item.assignedQty)
-            .filter(([_, v]) => (v as number) > 0)
-            .map(([k, v]) => (
-              <div key={k} className="bg-white border-2 border-gray-200 px-3 py-1 rounded-lg flex items-center gap-2">
-                <span className="text-xs font-black text-gray-900">{k}</span>
-                <span className="w-[1px] h-3 bg-gray-200" />
-                <span className="text-xs font-black text-blue-600">{v as number}</span>
+            <Card key={item.id} className="p-0 overflow-hidden border-2 border-gray-100 shadow-md">
+              <div className="relative aspect-[4/5] bg-gray-100">
+                <img 
+                  src={item.batch.imageUrl} 
+                  className="w-full h-full object-cover" 
+                  alt={item.batch.styleName} 
+                />
+                <div className="absolute top-3 right-3">
+                  <Badge color={item.status === AssignmentStatus.ASSIGNED ? 'blue' : 'yellow'} className="shadow-sm">
+                    {item.status}
+                  </Badge>
+                </div>
               </div>
-            ))}
-        </div>
-      </div>
-    </div>
-    
-    {/* 3. Action Buttons */}
-    <div className="p-4 pt-0 flex gap-3">
-      {item.status === AssignmentStatus.ASSIGNED ? (
-        <>
-          <button 
-            className="flex-1 py-4 bg-white border-2 border-red-500 text-red-600 font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-sm"
-            onClick={() => onRejectAssignment(item.batch.id, item.id)}
-          >
-            Reject
-          </button>
-          <button 
-            className="flex-1 py-4 bg-green-600 text-white font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-lg border-b-4 border-green-800"
-            onClick={() => onAcceptAssignment(item.batch.id, item.id)}
-          >
-            Accept Job
-          </button>
-        </>
-      ) : (
-        <button 
-          className="w-full py-5 bg-blue-600 text-white font-black rounded-xl text-lg shadow-xl active:scale-95 transition-all uppercase tracking-[0.2em] border-b-4 border-blue-800"
-          onClick={() => onMarkComplete(item.batch.id, item.id)}
-        >
-          Mark as Stitched
-        </button>
-      )}
-    </div>
-  </Card>
-))}
+
+              <div className="p-5">
+                <div className="flex justify-between items-end mb-3">
+                  <div>
+                    <h4 className="font-black text-gray-900 text-xl uppercase tracking-tight leading-none">
+                      {item.batch.styleName}
+                    </h4>
+                    <p className="text-sm text-gray-500 mt-2 font-bold uppercase tracking-wider">
+                      Job Allocation
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400 font-bold uppercase">Total Qty</p>
+                    <p className="text-2xl font-black text-blue-600">{calculateTotalQty(item.assignedQty)}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <p className="text-[10px] font-black text-gray-400 uppercase mb-2 tracking-widest">Required Sizes</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(item.assignedQty)
+                      .filter(([_, v]) => (v as number) > 0)
+                      .map(([k, v]) => (
+                        <div key={k} className="bg-white border-2 border-gray-200 px-3 py-1 rounded-lg flex items-center gap-2">
+                          <span className="text-xs font-black text-gray-900">{k}</span>
+                          <span className="w-[1px] h-3 bg-gray-200" />
+                          <span className="text-xs font-black text-blue-600">{v as number}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 pt-0 flex gap-3">
+                {item.status === AssignmentStatus.ASSIGNED ? (
+                  <>
+                    <button 
+                      className="flex-1 py-4 bg-white border-2 border-red-500 text-red-600 font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-sm"
+                      onClick={() => onRejectAssignment(item.batch.id, item.id)}
+                    >
+                      Reject
+                    </button>
+                    <button 
+                      className="flex-1 py-4 bg-green-600 text-white font-black rounded-xl active:scale-95 transition-all uppercase tracking-widest text-sm shadow-lg border-b-4 border-green-800"
+                      onClick={() => onAcceptAssignment(item.batch.id, item.id)}
+                    >
+                      Accept Job
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    className="w-full py-5 bg-blue-600 text-white font-black rounded-xl text-lg shadow-xl active:scale-95 transition-all uppercase tracking-[0.2em] border-b-4 border-blue-800"
+                    onClick={() => onMarkComplete(item.batch.id, item.id)}
+                  >
+                    Mark as Stitched
+                  </button>
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 
-      {/* ✅ UPDATED: Added Rate and Quantity Columns with Size Extraction */}
+      {/* Passbook Tab */}
       {activeTab === 'passbook' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden overflow-x-auto">
           <table className="w-full text-sm text-left min-w-[500px]">
@@ -317,31 +315,37 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
                   </td>
                   <td className="px-3 py-3">
                     <div className="font-bold text-gray-900">{entry.description.split('[')[0]}</div>
-                    {/* ✅ Show sizes if they exist in brackets */}
                     {entry.description.includes('[') && (
                       <div className="text-[10px] text-blue-600 font-mono mt-0.5">
                         {entry.description.match(/\[(.*?)\]/)?.[1]}
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-center font-medium">
-                    {(entry as any).quantity || '-'}
-                  </td>
-                  <td className="px-3 py-3 text-center text-gray-500">
-                    {(entry as any).rate ? `₹${(entry as any).rate}` : '-'}
-                  </td>
-                  <td className="px-3 py-3 text-right text-green-700 font-black">
-                    {entry.type === 'CREDIT' ? `₹${entry.amount}` : '-'}
-                  </td>
-                  <td className="px-3 py-3 text-right text-red-700 font-black">
-                    {entry.type === 'DEBIT' ? `₹${entry.amount}` : '-'}
-                  </td>
+                  <td className="px-3 py-3 text-center font-medium">{(entry as any).quantity || '-'}</td>
+                  <td className="px-3 py-3 text-center text-gray-500">{(entry as any).rate ? `₹${(entry as any).rate}` : '-'}</td>
+                  <td className="px-3 py-3 text-right text-green-700 font-black">{entry.type === 'CREDIT' ? `₹${entry.amount}` : '-'}</td>
+                  <td className="px-3 py-3 text-right text-red-700 font-black">{entry.type === 'DEBIT' ? `₹${entry.amount}` : '-'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {/* 🔴 ON-SCREEN DEBUGGER (Visible only on mobile/testing) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 text-green-400 font-mono text-[10px] p-4 h-48 overflow-y-auto border-t-2 border-green-500 z-50">
+        <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-1">
+          <span className="font-bold text-white">🐞 DEBUG CONSOLE</span>
+          <button onClick={() => setDebugLogs([])} className="text-gray-400 underline">Clear</button>
+        </div>
+        {debugLogs.length === 0 && <span className="text-gray-600 italic">Waiting for actions...</span>}
+        {debugLogs.map((log, i) => (
+          <div key={i} className="mb-1 border-b border-gray-800 pb-1 break-all">
+            {log}
+          </div>
+        ))}
+      </div>
+
     </div>
   );
 };
