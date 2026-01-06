@@ -54,38 +54,76 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
 
   // --- Profile Photo Handler ---
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const file = e.target.files?.[0];
+  if (!file) {
+    console.log('DEBUG: No file selected');
+    return;
+  }
 
-    setIsUploading(true);
-    const filePath = `avatars/${currentUser.id}.jpg`;
+  console.log('DEBUG: File selected:', {
+    name: file.name,
+    size: file.size,
+    type: file.type
+  });
 
-    try {
-      const { error: uploadError } = await supabase.storage
-        .from('designs')
-        .upload(filePath, file, { upsert: true });
+  setIsUploading(true);
+  const filePath = `avatars/${currentUser.id}.jpg`;
 
-      if (uploadError) throw uploadError;
+  try {
+    // Step 1: Upload to Storage
+    console.log('DEBUG: Uploading to storage...', filePath);
+    const { error: uploadError } = await supabase.storage
+      .from('designs')
+      .upload(filePath, file, { upsert: true });
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('designs')
-        .getPublicUrl(filePath);
-      
-      await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', currentUser.id);
-
-      onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
-      alert("Photo updated!");
-      window.location.reload(); 
-
-    } catch (err: any) {
-      alert("Photo error: " + err.message);
-    } finally {
-      setIsUploading(false);
+    if (uploadError) {
+      console.error('DEBUG: Upload error:', uploadError);
+      throw new Error('Upload failed: ' + uploadError.message);
     }
-  };
+    console.log('DEBUG: Upload successful');
+
+    // Step 2: Get Public URL
+    console.log('DEBUG: Getting public URL...');
+    const { data: { publicUrl } } = supabase.storage
+      .from('designs')
+      .getPublicUrl(filePath);
+    
+    console.log('DEBUG: Public URL:', publicUrl);
+
+    // Step 3: Update Database
+    console.log('DEBUG: Updating database...');
+    const { data: updateData, error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', currentUser.id)
+      .select();
+
+    if (updateError) {
+      console.error('DEBUG: Database update error:', updateError);
+      throw new Error('Database update failed: ' + updateError.message);
+    }
+
+    console.log('DEBUG: Database updated:', updateData);
+
+    // Step 4: Update Local State
+    console.log('DEBUG: Updating local state...');
+    onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
+
+    console.log('DEBUG: Photo update complete!');
+    alert("Photo updated successfully! ✅");
+    
+    // Reload to show new photo
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+
+  } catch (err: any) {
+    console.error('DEBUG: Photo upload failed:', err);
+    alert("❌ Photo upload failed!\n\nError: " + err.message + "\n\nCheck console for details.");
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   return (
     <div className="space-y-6">
