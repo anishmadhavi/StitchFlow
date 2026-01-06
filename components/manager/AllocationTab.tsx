@@ -4,9 +4,9 @@
  */
 
 import React from 'react';
-import { Scissors, UserPlus } from 'lucide-react';
-import { Batch } from '../../types';
-import { Button, Card } from '../Shared';
+import { Scissors, UserPlus, ZoomIn } from 'lucide-react';
+import { Batch, BatchStatus, SizeQty } from '../../types';
+import { Card, Badge } from '../Shared';
 
 interface AllocationTabProps {
   pendingCuttingBatches: Batch[];
@@ -21,72 +21,82 @@ export const AllocationTab: React.FC<AllocationTabProps> = ({
   onOpenCutModal,
   onOpenAssignModal
 }) => {
+  
+  const calculateTotalAvailable = (availableQty: SizeQty) => {
+    return Object.values(availableQty || {}).reduce((sum, val) => sum + (val as number), 0);
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Pending Cutting Section */}
+    <div className="space-y-10 pb-20">
+      
+      {/* SECTION 1: CUTTING PENDING */}
       <section>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Scissors size={18} /> Pending Cutting
+        <h3 className="text-sm font-black text-gray-400 mb-4 px-2 uppercase tracking-widest flex items-center gap-2">
+           <span className="w-2 h-2 rounded-full bg-green-500"></span> Pending Cutting
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="space-y-6">
           {pendingCuttingBatches.length === 0 && (
-            <p className="text-sm text-gray-500">No batches waiting for cutting.</p>
+             <p className="text-center text-gray-400 text-sm py-4 italic">No batches waiting for cutting.</p>
           )}
-          {pendingCuttingBatches.length > 0 && pendingCuttingBatches.map(batch => (
-            <Card key={batch.id} className="p-4 border-l-4 border-l-indigo-500">
-              <div className="flex gap-4">
-                <img 
-                  src={batch.imageUrl} 
-                  className="w-16 h-16 rounded object-cover" 
-                  alt="" 
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium">{batch.styleName}</h4>
-                  <Button 
-                    size="sm" 
-                    className="mt-2" 
-                    onClick={() => onOpenCutModal(batch)}
-                  >
-                    Finalize Cut
-                  </Button>
+          
+          {pendingCuttingBatches.map(batch => (
+            <Card key={batch.id} className="overflow-hidden border-0 shadow-xl rounded-2xl bg-white">
+              <div className="relative aspect-[4/5] w-full">
+                <img src={batch.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="" />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-20">
+                  <h4 className="text-2xl font-black text-white">{batch.styleName}</h4>
                 </div>
+              </div>
+              <div className="p-4">
+                 <button 
+                   onClick={() => onOpenCutModal(batch)}
+                   className="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-lg shadow-green-200 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest"
+                 >
+                   <Scissors size={20} /> Finalize Cut
+                 </button>
               </div>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* Allocate to Karigar Section */}
+      {/* SECTION 2: ASSIGNMENT */}
       <section>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <UserPlus size={18} /> Allocate to Karigar
+        <h3 className="text-sm font-black text-gray-400 mb-4 px-2 uppercase tracking-widest flex items-center gap-2">
+           <span className="w-2 h-2 rounded-full bg-blue-500"></span> Ready to Assign
         </h3>
-        <div className="grid grid-cols-1 gap-4">
+
+        <div className="space-y-6">
           {assignableBatches.length === 0 && (
-            <p className="text-sm text-gray-500">No stock available for assignment.</p>
+             <p className="text-center text-gray-400 text-sm py-4 italic">No stock available to assign.</p>
           )}
-          {assignableBatches.length > 0 && assignableBatches.map(batch => {
-            const totalAvailable = (Object.values(batch.availableQty) as number[])
-              .reduce((a, b) => a + b, 0);
-            
+
+          {assignableBatches.map(batch => {
+            const totalAvailable = calculateTotalAvailable(batch.availableQty || {});
             if (totalAvailable <= 0) return null;
-            
+
             return (
-              <Card key={batch.id} className="p-4 flex flex-col md:flex-row items-center gap-4">
-                <img 
-                  src={batch.imageUrl} 
-                  className="w-12 h-12 rounded object-cover" 
-                  alt="" 
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">{batch.styleName}</h4>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Available: {totalAvailable} pcs
+              <Card key={batch.id} className="overflow-hidden border-0 shadow-xl rounded-2xl bg-white">
+                <div className="relative aspect-[4/5] w-full">
+                  <img src={batch.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="" />
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-white/90 backdrop-blur text-blue-800 px-3 py-1 rounded-full text-xs font-black shadow-sm border border-white">
+                      {totalAvailable} Pcs Available
+                    </span>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-20">
+                    <h4 className="text-2xl font-black text-white">{batch.styleName}</h4>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => onOpenAssignModal(batch)}>
-                  Assign
-                </Button>
+                <div className="p-4">
+                   <button 
+                     onClick={() => onOpenAssignModal(batch)}
+                     className="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest"
+                   >
+                     <UserPlus size={20} /> Assign Karigar
+                   </button>
+                </div>
               </Card>
             );
           })}
