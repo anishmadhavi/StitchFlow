@@ -62,7 +62,10 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ batches, onCreateB
                     <span className="text-[10px] font-black uppercase">Planned Qty</span>
                   </div>
                   <p className="text-2xl font-black text-gray-900">
-                    {Object.values(batch.plannedQty).reduce((a, b) => (a as number) + (b as number), 0)}
+                    {/* Safe check for plannedQty as well just in case */}
+                    {batch.plannedQty 
+                      ? Object.values(batch.plannedQty).reduce((a, b) => (a as number) + (b as number), 0)
+                      : 0}
                   </p>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -71,13 +74,15 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({ batches, onCreateB
                     <span className="text-[10px] font-black uppercase">Created</span>
                   </div>
                   <p className="text-sm font-bold text-gray-900 mt-1">
-                    {format(new Date(batch.createdAt), 'dd MMM')}
+                    {/* 🟢 FIX IS HERE: Check if date exists before formatting */}
+                    {batch.createdAt 
+                      ? format(new Date(batch.createdAt), 'dd MMM') 
+                      : 'N/A'}
                   </p>
                 </div>
               </div>
 
               {/* Actions */}
-              {/* Note: You can add an 'Edit' button here later if needed */}
               <div className="pt-2">
                  <button className="w-full py-4 rounded-xl border-2 border-red-100 text-red-500 font-bold uppercase text-xs hover:bg-red-50 hover:border-red-500 transition-colors flex items-center justify-center gap-2">
                     <Trash2 size={16} /> Delete Batch
