@@ -80,7 +80,10 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
 
   setIsUploading(true);
   
-  // Create clean filename: userid_timestamp.jpg
+  // 🔒 SET UPLOAD LOCK TO PREVENT AUTH INTERFERENCE
+  localStorage.setItem('upload_in_progress', 'true');
+  console.log('DEBUG: 🔒 Upload lock enabled');
+  
   const timestamp = Date.now();
   const extension = file.type.split('/')[1] || 'jpg';
   const cleanFilePath = `avatars/${currentUser.id}_${timestamp}.${extension}`;
@@ -88,7 +91,7 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   console.log('DEBUG: Clean filename:', cleanFilePath);
 
   try {
-    console.log('DEBUG: Step 1 - Uploading to storage...');
+    console.log('DEBUG: Step 1/4 - Uploading to storage...');
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('designs')
@@ -99,19 +102,19 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
 
     if (uploadError) {
       console.error('DEBUG: Upload error:', uploadError);
-      throw new Error('Upload failed: ' + uploadError.message);
+      throw new Error('Upload: ' + uploadError.message);
     }
     
-    console.log('DEBUG: Upload successful');
+    console.log('DEBUG: ✅ Step 1 complete');
 
-    console.log('DEBUG: Step 2 - Getting public URL...');
+    console.log('DEBUG: Step 2/4 - Getting public URL...');
     const { data: { publicUrl } } = supabase.storage
       .from('designs')
       .getPublicUrl(cleanFilePath);
     
-    console.log('DEBUG: Public URL:', publicUrl);
+    console.log('DEBUG: ✅ Step 2 complete. URL:', publicUrl.substring(0, 50) + '...');
 
-    console.log('DEBUG: Step 3 - Updating database...');
+    console.log('DEBUG: Step 3/4 - Updating database...');
     const { data: updateData, error: updateError } = await supabase
       .from('profiles')
       .update({ avatar_url: publicUrl })
@@ -119,24 +122,36 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
       .select();
 
     if (updateError) {
-      console.error('DEBUG: Database update error:', updateError);
-      throw new Error('Database update failed: ' + updateError.message);
+      console.error('DEBUG: Database error:', updateError);
+      throw new Error('Database: ' + updateError.message);
     }
 
-    console.log('DEBUG: Database updated:', updateData);
+    console.log('DEBUG: ✅ Step 3 complete');
 
-    console.log('DEBUG: SUCCESS!');
-    alert("✅ Photo updated successfully!");
-    
+    console.log('DEBUG: Step 4/4 - Finalizing...');
     onUpdateUser(currentUser.id, { avatarUrl: publicUrl });
+
+    console.log('DEBUG: ✅ ALL STEPS COMPLETE!');
+    
+    // 🔓 RELEASE LOCK
+    localStorage.removeItem('upload_in_progress');
+    console.log('DEBUG: 🔓 Upload lock released');
+    
+    alert("✅ Photo updated!");
     
     setTimeout(() => {
+      console.log('DEBUG: Reloading page...');
       window.location.reload();
-    }, 1000);
+    }, 800);
 
   } catch (err: any) {
-    console.error('DEBUG: FAILED:', err);
-    alert(`❌ Failed: ${err.message}`);
+    console.error('DEBUG: ❌ FAILED at some step:', err);
+    
+    // 🔓 RELEASE LOCK ON ERROR
+    localStorage.removeItem('upload_in_progress');
+    console.log('DEBUG: 🔓 Lock released (error)');
+    
+    alert(`❌ Upload failed!\n\n${err.message}`);
   } finally {
     setIsUploading(false);
   }
