@@ -1,15 +1,16 @@
 /**
  * components/KarigarDashboard.tsx
- * STATUS: DEBUG MODE ENABLED 🐞
+ * STATUS: UPDATED with PIN Change Feature ✅
  * Purpose: detailed debugging of mobile camera upload issues
  */
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '../src/supabaseClient';
-import { Camera, User as UserIcon } from 'lucide-react';
+import { Camera, User as UserIcon, KeyRound } from 'lucide-react';
 import { Batch, User, AssignmentStatus, SizeQty } from '../types';
 import { Card, Badge } from './Shared';
 import { format } from 'date-fns';
+import { userService } from '../services/userService';
 
 interface KarigarDashboardProps {
   currentUser: User;
@@ -28,8 +29,9 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
   onMarkComplete,
   onUpdateUser
 }) => {
-  const [activeTab, setActiveTab] = useState<'jobs' | 'passbook'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'passbook' | 'settings'>('jobs');
   const [isUploading, setIsUploading] = useState(false);
+  const [newPin, setNewPin] = useState('');
   
   // 🐞 DEBUG STATE: Stores logs to show on screen
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
@@ -48,7 +50,6 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
     log(`👤 User ID: ${currentUser.id.slice(0, 5)}...`);
     
     return () => {
-      // If this logs during upload, it proves the component is being killed!
       console.log(`[DEBUG] 💀 Dashboard Unmounting (Instance: ${componentId.current})`);
     };
   }, []);
@@ -146,9 +147,6 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
       log(`🎉 SUCCESS! Photo updated.`);
       alert("✅ Photo Updated Successfully!");
       
-      // Optional: reload to force refresh image
-      // window.location.reload(); 
-
     } catch (err: any) {
       log(`🔥 CRITICAL FAILURE: ${err.message || JSON.stringify(err)}`);
       alert(`Upload Failed: ${err.message}`);
@@ -178,7 +176,6 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
                 <input 
                    type="file" 
                    accept="image/*" 
-                   // capture="user" // ⚠️ DISABLED 'capture' to prefer file picker over direct camera (often more stable)
                    className="hidden" 
                    onChange={handlePhotoUpload}
                    disabled={isUploading}
@@ -208,7 +205,8 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
       {/* Tabs */}
       <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
         <button onClick={() => setActiveTab('jobs')} className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${activeTab === 'jobs' ? 'bg-orange-100 text-orange-700 shadow-sm' : 'text-gray-500'}`}>My Jobs</button>
-        <button onClick={() => setActiveTab('passbook')} className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${activeTab === 'passbook' ? 'bg-orange-100 text-orange-700 shadow-sm' : 'text-gray-500'}`}>My Passbook</button>
+        <button onClick={() => setActiveTab('passbook')} className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${activeTab === 'passbook' ? 'bg-orange-100 text-orange-700 shadow-sm' : 'text-gray-500'}`}>Passbook</button>
+        <button onClick={() => setActiveTab('settings')} className={`flex-1 py-3 text-sm font-medium rounded-md transition-all ${activeTab === 'settings' ? 'bg-orange-100 text-orange-700 shadow-sm' : 'text-gray-500'}`}>Settings</button>
       </div>
 
       {/* Content */}
@@ -329,6 +327,51 @@ export const KarigarDashboard: React.FC<KarigarDashboardProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Settings Tab (PIN Change) */}
+      {activeTab === 'settings' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center gap-3 mb-4 text-gray-900 font-bold text-lg">
+            <div className="bg-orange-100 p-2 rounded-full">
+              <KeyRound className="text-orange-600" size={20} />
+            </div>
+            Change Login PIN
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New PIN (4-6 Digits)</label>
+              <input 
+                type="tel" 
+                maxLength={6}
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value)}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-xl font-mono tracking-widest focus:border-orange-500 focus:outline-none"
+                placeholder="123456"
+              />
+            </div>
+            
+            <button 
+              onClick={async () => {
+                if(newPin.length < 4) return alert("PIN is too short!");
+                if(!window.confirm("Change your login PIN?")) return;
+                
+                try {
+                  await userService.updatePin(currentUser.id, newPin);
+                  alert("✅ PIN Changed Successfully!");
+                  setNewPin("");
+                  onUpdateUser(currentUser.id, { displayPin: newPin } as any);
+                } catch(e: any) {
+                  alert("Error: " + e.message);
+                }
+              }}
+              className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all"
+            >
+              Update PIN
+            </button>
+          </div>
         </div>
       )}
 
