@@ -64,7 +64,7 @@ export const userService = {
   },
 
   // ------------------------------------------------------------------
-  // 2. UPDATE USER
+  // 2. UPDATE USER (Generic Profile Updates)
   // ------------------------------------------------------------------
   async updateUser(userId: string, updates: Partial<User>) {
     const dbUpdates: any = {};
@@ -74,7 +74,7 @@ export const userService = {
     if (updates.displayPin) dbUpdates.display_pin = updates.displayPin;
 
     const { error } = await supabase.from('profiles').update(dbUpdates).eq('id', userId);
-    if (error) alert(error.message); else alert("Updated!");
+    if (error) alert(error.message); else console.log("Profile Updated");
   },
 
   // ------------------------------------------------------------------
@@ -137,7 +137,45 @@ export const userService = {
   },
 
   // ------------------------------------------------------------------
-  // 4. TRANSACTION (Required by App.tsx)
+  // 4. UPDATE PIN (Secure Edge Function) - NEW ADDITION ✅
+  // ------------------------------------------------------------------
+  async updatePin(userId: string, newPin: string) {
+    console.log("🔐 Updating PIN for:", userId);
+    try {
+      // 1. Get Token
+      const rawData = localStorage.getItem('stitchflow-v2');
+      const sessionData = rawData ? JSON.parse(rawData) : null;
+      const token = sessionData?.access_token;
+
+      if (!token) throw new Error("No session found");
+
+      // 2. Call Edge Function
+      const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/update-user-pin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, newPin })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text);
+      }
+
+      const data = await response.json();
+      console.log("✅ PIN Updated:", data);
+      return data;
+
+    } catch (err: any) {
+      console.error("❌ PIN Update Failed:", err);
+      throw err; // Re-throw to handle in UI
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // 5. TRANSACTION (Required by App.tsx)
   // ------------------------------------------------------------------
   async handleTransaction(userId: string, amount: number, description: string, type: 'CREDIT' | 'DEBIT') {
     try {
