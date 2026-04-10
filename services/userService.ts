@@ -36,7 +36,7 @@ export const userService = {
 
       // Send Request
       console.log("📡 Sending Request to Edge Function...");
-      const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/admin-create-user', {
+      const response = await fetch('https://moiiawoxpkxodkncmfxz.supabase.co/functions/v1/admin-create-user', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -109,7 +109,7 @@ export const userService = {
 
       if (token) {
         console.log("📡 Calling Edge Function (Raw Fetch)...");
-        const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/delete-auth-user', {
+        const response = await fetch('https://moiiawoxpkxodkncmfxz.supabase.co/functions/v1/delete-auth-user', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -150,7 +150,7 @@ export const userService = {
       if (!token) throw new Error("No session found");
 
       // 2. Call Edge Function
-      const response = await fetch('https://sdrvifpydrlykhbnvtxi.supabase.co/functions/v1/update-user-pin', {
+      const response = await fetch('https://moiiawoxpkxodkncmfxz.supabase.co/functions/v1/update-user-pin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
